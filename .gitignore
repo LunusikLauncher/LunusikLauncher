@@ -1,0 +1,6 @@
+.vscode/
+builds/build-linux/
+builds/build-windows/
+OTHER_DATA/
+*.qm
+CMakeLists.txt

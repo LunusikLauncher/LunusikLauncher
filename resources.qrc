@@ -1,0 +1,33 @@
+<RCC>
+    <qresource prefix="/">
+		<file>icons/logo.svg</file>
+		<file>icons/filter.svg</file>
+		<file>icons/create_server.svg</file>
+		<file>icons/versions.svg</file>
+		<file>icons/arrow_down.svg</file>
+		<file>icons/arrow_up.svg</file>
+		<file>icons/install.svg</file>
+		<file>icons/settings.svg</file>
+		<file>icons/settings_hover.svg</file>
+		<file>icons/folder.svg</file>
+		<file>icons/folder_hover.svg</file>
+		<file>icons/info.svg</file>
+		<file>icons/info_hover.svg</file>
+		<file>icons/arrow_right.svg</file>
+		<file>icons/arrow_right_hover.svg</file>
+		<file>icons/update_versions.svg</file>
+		<file>icons/favorite.svg</file>
+		<file>icons/favorite_hover.svg</file>
+		<file>icons/favorite_checked.svg</file>
+		<file>icons/LLL.ico</file>
+    </qresource>
+
+    <qresource prefix="/i18n">
+		<file>translations/en-en.qm</file>
+		<file>translations/es-es.qm</file>
+		<file>translations/it-it.qm</file>
+		<file>translations/ja-jp.qm</file>
+		<file>translations/ru-ru.qm</file>
+		<file>translations/zn-ch.qm</file>
+    </qresource>
+</RCC>

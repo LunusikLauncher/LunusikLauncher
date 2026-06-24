@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunusik Launcher - Download the modern Minecraft launcher</title>
+     <link rel="icon" href="images/logo.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body>
+    <div class="bg-blur-1"></div>
+    <div class="bg-blur-2"></div>
+
+    <header class="header">
+        <div class="container header-container">
+            <div class="logo">
+                <img src="images/logo.png" alt="LunusikLauncher Logo" class="logo-img">
+                <span class="logo-text">Lunusik Launcher</span>
+            </div>
+            <nav class="nav">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#download" class="nav-link">Download</a>
+                <a href="#support" class="nav-link">Support</a>
+                <a href="#about" class="nav-link">About</a>
+            </nav>
+            <a href="#download" class="btn btn-secondary">Download</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">A new era of your Minecraft adventures</h1>
+                <p class="hero-subtitle">A fast, smooth, and user-friendly launcher that supports all versions from Alpha to the latest releases.</p>
+                <a href="#download" class="btn btn-primary">Download for free</a>
+            </div>
+            <div class="hero-mockup">
+                <div class="mockup-card">
+                    <div class="mockup-header">
+                        <span class="mockup-dot"></span>
+                        <span class="mockup-dot"></span>
+                        <span class="mockup-dot"></span>
+                    </div>
+                    <div class="mockup-body">
+                        <div class="mockup-line preview-title">Lunusik v0.3.1 beta</div>
+                        <div class="mockup-line"></div>
+                        <div class="mockup-line short"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="featuresSection">
+        <div class="container">
+            <h2 class="section-title">What's in it</h2>
+            <div class="features-grid">
+                <div class="card hidden">
+                    <img class="feature-icon" src="images/filters.svg"/>
+
+                    <h3>Smart filters</h3>
+                    <p>Instantly split versions into Releases, Snapshots, Alphas, and Betas in one click.</p>
+                </div>
+                <div class="card in-development hidden">
+                    <div class="dev-badge">In development</div>
+                    <div class="card-content">
+                        <img class="feature-icon" src="images/create_server.svg"/>
+
+                        <h3>Creating servers</h3>
+                        <p>Easily customize difficulty, game modes, and server settings, as well as launch the server directly from the launcher.</p>
+                    </div>
+                </div>
+                <div class="card hidden">
+                    <img class="feature-icon" src="images/favorite.svg"/>
+
+                    <h3>Favorited versions</h3>
+                    <p>Save your favorite Minecraft versions for instant access without searching.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="download" class="downloadSection">
+        <div class="container">
+            <h2 class="section-title">Choose your platform</h2>
+            <div class="download-grid">
+                <div class="card hidden">
+                    <img class="os-icon" src="images/systems logo/windows.svg"/>
+
+                    <h3>Windows</h3>
+                    <p class="os-desc">Windows 10 / 11 (64-bit)</p>
+                    <a href="https://github.com/Lunusik/LunusikLauncher/releases/download/v0.3.1/build_v0.3.1_beta.7z" class="btn btn-download">Download .7Z</a>
+                </div>
+                <div class="card in-development hidden">
+                    <div class="dev-badge">In development</div>
+                    <div class="card-content">
+                        <img class="os-icon" src="images/systems logo/mac-os.svg"/>
+
+                        <h3>macOS</h3>
+                        <p class="os-desc">Intel & Apple Silicon</p>
+                        <a href="#" class="btn btn-download">Download ...</a>
+                    </div>
+                </div>
+                <div class="card in-development hidden">
+                    <div class="dev-badge">In development</div>
+                    <div class="card-content">
+                        <img class="os-icon" src="images/systems logo/linux.svg"/>
+
+                        <h3>Linux</h3>
+                        <p class="os-desc">Universal Build</p>
+                        <a href="#" class="btn btn-download">Download ....</a>
+                    </div>
+                </div>
+            </div>
+            <p class="version-tag">Current stable version: Lunusik Launcher v0.3.1 beta</p>
+        </div>
+    </section>
+
+    <section id="support" class="supportSection">
+        <div class="container support-container">
+            <div class="support-info">
+                <h2 class="section-title left">Any questions left?</h2>
+                <p class="support-text">Encountered a bug or have a cool improvement suggestion? Contact us directly by email at the project's official email address.</p>
+                <div class="email-box">
+                    <span>Mail support:</span>
+                    <a href="mailto:lunusiklauncher@gmail.com" class="support-email">lunusiklauncher@gmail.com</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container footer-container">
+            <p class="copyright">&copy; 2026 Lunusik Launcher. All rights reserved.</p>
+            <p class="disclaimer">NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.</p>
+            <p class="disclaimer">This is a non-commercial, open-source fan project. All game assets are downloaded directly from official Mojang servers.</p>
+        </div>
+    </footer>
+
+    <div id="about-drawer" class="drawer">
+        <div class="drawer-overlay" id="drawer-close-overlay"></div>
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h2>About Launcher</h2>
+                <button id="drawer-close-btn" class="drawer-close-x">&times;</button>
+            </div>
+            <div class="drawer-body">
+                <p class="drawer-author"><strong>Developer:</strong> Lenya</p>
+                <hr class="drawer-divider">
+                <p class="drawer-qt-info">
+                    This launcher is built using the Open Source version of the <strong>Qt framework</strong> (v6.8.0) distributed under the 
+                    <a href="https://www.gnu.org/licenses/lgpl-3.0.en.html" target="_blank">LGPLv3</a> license. 
+                    You can find the Qt source code on their official website: <a href="https://qt.io" target="_blank">qt.io</a>.
+                </p>
+                <hr class="drawer-divider">
+                <p class="drawer-github">
+                    Source code is available on <a href="https://github.com/Lunusik/LunusikLauncher" target="_blank">GitHub</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
