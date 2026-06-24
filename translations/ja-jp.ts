@@ -13,7 +13,7 @@
     </message>
     <message>
         <source>launcher_version</source>
-        <translation>Lunusik Launcher v0.3.1 beta</translation>
+        <translation>Lunusik Launcher v0.3.2 beta</translation>
     </message>
     <message>
         <source>current_language</source>

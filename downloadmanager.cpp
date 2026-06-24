@@ -81,7 +81,7 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
 
     const QJsonObject client = versionManifest["downloads"].toObject()["client"].toObject();
     QList<DownloadTask> downloadTasks;
-    downloadTasks.append({client["url"].toString(), minecraftDirectory + pathVersion + "client.jar", client["sha1"].toString(), client["size"].toInt()});
+    downloadTasks.append({client["url"].toString(), minecraftDirectory + pathVersion + name + ".jar", client["sha1"].toString(), client["size"].toInt()});
 
     QString pathToNatives = minecraftDirectory + pathVersion + "natives";
 
