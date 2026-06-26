@@ -2,7 +2,7 @@
 **Lunusik Launcher** is a modern, fast and smooth launcher for Minecraft, written in C++ using the QT framework.
 <br>
 <details>
-  <summary style="cursor: pointer; font-weight: bold; color: #9333ea;">Screenshots</summary>
+  <summary>Screenshots</summary>
   <br>
   <p align="center">
     <img src="screenshots/main_screen.png" alt="Launcher Main Screen" width="450" style="margin: 5px;">
