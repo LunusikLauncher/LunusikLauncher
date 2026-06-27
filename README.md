@@ -14,7 +14,7 @@ This launcher was created because I was bored.
 
 For now, it only implements the most basic features: launching and installing Minecraft, sorting versions, adding them to favorites, but in the future, the creation of your own local server will also be implemented.
 ### How to install
-You can download the launcher directly from our **[official website](https://lunusik.github.io/LunusikLauncher/)** or from the **[GitHub Releases](https://github.com/Lunusik/LunusikLauncher/releases)** page.
+You can download the launcher directly from our **[official website](https://LunusikLauncher.github.io/)** or from the **[GitHub Releases](https://github.com/LunusikLauncher/LunusikLauncher/releases)** page.
 ### How to compile
 Currently, the launcher only works on Windows, but support for other platforms is coming soon!
 
