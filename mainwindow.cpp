@@ -1610,7 +1610,7 @@ void MainWindow::clickPlayMinecraft(){
                         "mojang",
                         btn->property("type").toString(),
                         "LunusikLauncher",
-                        "v0.3.2 beta",
+                        "v0.3.3 beta",
                         "200",
                         "200",
                     
