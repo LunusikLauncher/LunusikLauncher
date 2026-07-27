@@ -14,7 +14,6 @@ public slots:
     void setMinecraftDirectory(const QString minecraftDirectory);
 signals:
     void updateVersions();
-    void showWindow();
     void renderVersions(const QList<VersionData> versions, const QList<LatestVersionData> latestVersions);
 
 private:
