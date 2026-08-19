@@ -170,6 +170,7 @@ Library.
 ```
 
 ## MinGW-w64 runtime (Windows)
+
 ```text
 Copyright (c) 2009, 2010, 2011, 2012, 2013 by the mingw-w64 project
 
@@ -213,6 +214,7 @@ Information on third party licenses used in MinGW-w64 can be found in its COPYIN
 ```
 
 ## LZMA SDK / XZ Utils (lzma.h)
+
 ```text
 The LZMA compression library header and runtime components are parts of XZ Utils.
 Most components of XZ Utils have been put into the public domain by their authors.
