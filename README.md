@@ -40,6 +40,13 @@ If you still encounter an error, please contact support: **[lunusiklauncher@gmai
 ### License
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
+### Third-party licenses
+This project uses the following third-party components:
+
+- **MinGW-w64 runtime** – licensed under the MinGW-w64 runtime license (BSD-like).
+- **LZMA SDK / liblzma** – public domain.
+
+The full texts of these licenses are available in the [COPYRIGHT](COPYRIGHT) file.
 ---
 ###### NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.
 ###### This is a non-commercial, open-source fan project. All game assets are downloaded directly from official Mojang servers.
