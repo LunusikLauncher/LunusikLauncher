@@ -3,7 +3,7 @@
 
 
 VersionsManager::VersionsManager(DownloadManager *DOWNLOAD_MANAGER, const QString &minecraftDirectory, QObject *parent) 
-: QObject(parent), 
+: Manager(parent), 
 DOWNLOAD_MANAGER(DOWNLOAD_MANAGER) {
     this->minecraftDirectory = minecraftDirectory;
     connect(DOWNLOAD_MANAGER, &DownloadManager::updatedVersions, this, &VersionsManager::readVersions);
@@ -16,8 +16,7 @@ void VersionsManager::setMinecraftDirectory(const QString minecraftDirectory){
 
 void VersionsManager::loadVersions(const bool isUpdateRequired) {
     if (isUpdateRequired || !readVersions()){
-        emit updateVersions();
-        return;
+        emit updateVersions(); 
     }
 }
 bool VersionsManager::readVersions() {
@@ -111,6 +110,7 @@ bool VersionsManager::readVersions() {
         }
     }
     emit renderVersions(versions_data, latest_versions_data);
+    emit showNotification(QCoreApplication::translate("Success", "update_success_versions"), "Success");
     return true;
 }
 const QList<QString> VersionsManager::getDownloadedVersions() {

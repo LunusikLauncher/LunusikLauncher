@@ -1,8 +1,10 @@
 cd /d "%~dp0"
 
+lrelease ./de-de.ts
 lrelease ./en-en.ts
 lrelease ./es-es.ts
+lrelease ./fr-fr.ts
 lrelease ./it-it.ts
 lrelease ./ja-jp.ts
 lrelease ./ru-ru.ts
-lrelease ./zn-ch.ts
+lrelease ./zh-cn.ts

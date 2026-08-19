@@ -13,7 +13,7 @@
     </message>
     <message>
         <source>launcher_version</source>
-        <translation>Lunusik Launcher v0.3.3 beta</translation>
+        <translation>v0.4.0 beta</translation>
     </message>
     <message>
         <source>current_language</source>
@@ -120,6 +120,10 @@
         <translation>ファイルをチェック中</translation>
     </message>
     <message>
+        <source>cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+    <message>
         <source>settings</source>
         <translation>ランチャー設定</translation>
     </message>
@@ -138,6 +142,86 @@
     <message>
         <source>RAM</source>
         <translation>割り当てメモリ (MB)</translation>
+    </message>
+</context>
+
+<context>
+    <name>Error</name>
+    <message>
+        <source>invalid_version_data</source>
+        <translation>無効なバージョンデータを受信しました。</translation>
+    </message>
+    <message>
+        <source>invalid_java_data</source>
+        <translation>無効なJavaデータを受信しました。</translation>
+    </message>
+    <message>
+        <source>java_manifest</source>
+        <translation>Javaマニフェストファイルの読み込みに失敗しました。</translation>
+    </message>
+    <message>
+        <source>java_versions</source>
+        <translation>Javaのバージョンリストの読み込みに失敗しました。</translation>
+    </message>
+    <message>
+        <source>assets_manifest</source>
+        <translation>Minecraft %1 のゲームリソースの読み込みに失敗しました。</translation>
+    </message>
+    <message>
+        <source>version_manifest</source>
+        <translation>Minecraft %1 の設定の読み込みに失敗しました。</translation>
+    </message>
+    <message>
+        <source>cant_create_dir</source>
+        <translation>ゲームディレクトリの作成に失敗しました。</translation>
+    </message>
+    <message>
+        <source>cant_write_file</source>
+        <translation>ディスクへのデータ書き込みに失敗しました。</translation>
+    </message>
+    <message>
+        <source>cant_read_file</source>
+        <translation>ダウンロードしたファイルをディスクから読み取れませんでした。</translation>
+    </message>
+    <message>
+        <source>cant_copy_file</source>
+        <translation>ゲームファイルのコピーに失敗しました。</translation>
+    </message>
+    <message>
+        <source>cant_open_jar</source>
+        <translation>ゲームアーカイブを開けませんでした。</translation>
+    </message>
+    <message>
+        <source>lzma_decode_error</source>
+        <translation>ゲームコンポーネントの解凍に失敗しました。ファイルが破損している可能性があります。</translation>
+    </message>
+    <message>
+        <source>empty_server_response</source>
+        <translation>サーバーから空のデータを受信しました。後でもう一度お試しください。</translation>
+    </message>
+    <message>
+        <source>exec_file_missing</source>
+        <translation>必要なゲームコンポーネントがありません。バージョンを再インストールしてください。</translation>
+    </message>
+    <message>
+        <source>cant_set_executable</source>
+        <translation>ファイルのアクセス許可を設定できませんでした。ランチャーのアクセス権を確認してください。</translation>
+    </message>
+    <message>
+        <source>cant_save_cache</source>
+        <translation>ローカルバージョンリストのキャッシュを保存できませんでした。ディスクの書き込み権限を確認してください。</translation>
+    </message>
+</context>
+
+<context>
+    <name>Success</name>
+    <message>
+        <source>install_success_version</source>
+        <translation>Minecraft %1 が正常にインストールされました！</translation>
+    </message>
+    <message>
+        <source>update_success_versions</source>
+        <translation>バージョンリストが正常に更新されました！</translation>
     </message>
 </context>
 </TS>

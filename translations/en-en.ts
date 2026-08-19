@@ -13,7 +13,7 @@
     </message>
     <message>
         <source>launcher_version</source>
-        <translation>Lunusik Launcher v0.3.3 beta</translation>
+        <translation>v0.4.0 beta</translation>
     </message>
     <message>
         <source>current_language</source>
@@ -120,6 +120,10 @@
         <translation>Checking files Minecraft</translation>
     </message>
     <message>
+        <source>cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
         <source>settings</source>
         <translation>Launcher Settings</translation>
     </message>
@@ -138,6 +142,86 @@
     <message>
         <source>RAM</source>
         <translation>Client Memory (MB)</translation>
+    </message>
+</context>
+
+<context>
+    <name>Error</name>
+    <message>
+        <source>invalid_version_data</source>
+        <translation>Invalid version data received.</translation>
+    </message>
+    <message>
+        <source>invalid_java_data</source>
+        <translation>Invalid java data received.</translation>
+    </message>
+    <message>
+        <source>java_manifest</source>
+        <translation>Failed to load Java manifest file.</translation>
+    </message>
+    <message>
+        <source>java_versions</source>
+        <translation>Failed to load the Java versions list.</translation>
+    </message>
+    <message>
+        <source>assets_manifest</source>
+        <translation>Failed to load game resources for Minecraft %1.</translation>
+    </message>
+    <message>
+        <source>version_manifest</source>
+        <translation>Failed to load configuration for Minecraft %1.</translation>
+    </message>
+    <message>
+        <source>cant_create_dir</source>
+        <translation>Failed to create game directori.</translation>
+    </message>
+    <message>
+        <source>cant_write_file</source>
+        <translation>Failed to write data to disk.</translation>
+    </message>
+    <message>
+        <source>cant_read_file</source>
+        <translation>Failed to read downloaded file from disk.</translation>
+    </message>
+    <message>
+        <source>cant_copy_file</source>
+        <translation>Failed to copy game files.</translation>
+    </message>
+    <message>
+        <source>cant_open_jar</source>
+        <translation>Failed to open game archive.</translation>
+    </message>
+    <message>
+        <source>lzma_decode_error</source>
+        <translation>Failed to decompress game components. File might be corrupted.</translation>
+    </message>
+    <message>
+        <source>empty_server_response</source>
+        <translation>Received empty data from the server. Please try again later.</translation>
+    </message>
+    <message>
+        <source>exec_file_missing</source>
+        <translation>Required game component is missing. Please reinstall the version.</translation>
+    </message>
+    <message>
+        <source>cant_set_executable</source>
+        <translation>Failed to set file permissions. Check the launcher access rights.</translation>
+    </message>
+    <message>
+        <source>cant_save_cache</source>
+        <translation>Failed to save the local version list cache. Check disk write permissions.</translation>
+    </message>
+</context>
+
+<context>
+    <name>Success</name>
+    <message>
+        <source>install_success_version</source>
+        <translation>Minecraft %1 successfully installed!</translation>
+    </message>
+    <message>
+        <source>update_success_versions</source>
+        <translation>Version list updated successfully!</translation>
     </message>
 </context>
 </TS>

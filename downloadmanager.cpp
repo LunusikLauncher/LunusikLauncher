@@ -20,33 +20,46 @@ void DownloadManager::setMinecraftDirectory(const QString minecraftDirectory){
 void DownloadManager::init(){
     manager = new QNetworkAccessManager();
 }
-
-void DownloadManager::cancelDownload() {
-    isStopDownload = true;
+void DownloadManager::finish(const bool success, const QString id) {
+    activeReplies.remove(id);
+    emit showOrHideProgress(false);
+    emit statusTextChanged(QCoreApplication::translate("MainWindow", "install_disable"));
+    emit finished(success, id);
+    emit progressUpdated(0);
+}
+void DownloadManager::cancelDownload(const QString &id) {
+    isBreakDownload = true;
 
     if (currentLoop && currentLoop->isRunning()) {
         currentLoop->quit();
     }
 
-    QList<QNetworkReply*> repliesToAbort = activeReplies;
+    QList<QNetworkReply*> repliesToAbort = activeReplies[id];
     for (QNetworkReply* reply : repliesToAbort) {
         if (reply && reply->isRunning()) {
             reply->abort();
-
         }
+        reply->deleteLater();
     }
     
-    activeReplies.clear();
-    emit statusTextChanged(QCoreApplication::translate("MainWindow", "install_stopped"));
-    isStopDownload = false;
+    finish(false, id);
+    isBreakDownload = false;
 
 }
+void DownloadManager::notificationAndCancel(const QString id, const QString message, const QString type, const int duration) {
+    cancelDownload(id);
+    emit showNotification(message, type);
+}
 void DownloadManager::downloadMinecraft(const QString text, const QString id, const QString name, const QString hashManifest, const QString url) {
-    if (isStopDownload) return;
+    if (isBreakDownload) return;
+
+    emit showOrHideProgress(true);
+    emit statusTextChanged(text);
 
     QDir dir;
 
     if(name.isEmpty() || url.isEmpty()){
+        notificationAndCancel(id, QCoreApplication::translate("Error", "invalid_version_data"), "Error");
         qWarning() << "Error: invalid data";
         return;
     }
@@ -57,6 +70,7 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
         QString fullPath = minecraftDirectory + subDir;
         if (!dir.exists(fullPath)) {
             if (!dir.mkpath(fullPath)) {
+                notificationAndCancel(id, QCoreApplication::translate("Error", "cant_create_dir"), "Error");
                 qWarning() << "Error: can't create folder" << fullPath;
                 return;
             }
@@ -65,6 +79,7 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
 
     QJsonObject versionManifest;
     if(!installOneFile(url, minecraftDirectory + pathVersion + name + ".json", &versionManifest, hashManifest)){
+        notificationAndCancel(id, QCoreApplication::translate("Error", "version_manifest").arg(name), "Error");
         qWarning() << "Loading error: cant install manifest for minecraft " << name;
         return;
     }
@@ -72,6 +87,7 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
     QJsonObject assetsManifest;
     const QJsonObject assetIndex = versionManifest["assetIndex"].toObject();
     if(!installOneFile(assetIndex["url"].toString(), minecraftDirectory + "/assets/indexes/" + name + ".json", &assetsManifest, assetIndex["sha1"].toString())){
+        notificationAndCancel(id, QCoreApplication::translate("Error", "assets_manifest").arg(name), "Error");
         qWarning() << "Loading error: cant install assets manifest for minecraft " << name;
         return;
     }
@@ -169,14 +185,19 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
 QList<DownloadTask> DownloadManager::downloadJava(const QString name){
     QList<DownloadTask> downloadTasks;
 
-    if (isStopDownload) return downloadTasks;
+    if (isBreakDownload) return downloadTasks;
     const QString urlManifest = "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json";
     const QString hashManifest = "0f47bc501bbc5009f34bdedb5a232d2ecce640fa";
     QJsonObject manifest;
 
-    installOneFile(urlManifest, minecraftDirectory + "/Java/javaManifest.json", &manifest, hashManifest);
+    if(!installOneFile(urlManifest, minecraftDirectory + "/Java/javaManifest.json", &manifest, hashManifest)) {
+        emit showNotification(QCoreApplication::translate("Error", "java_versions"), "Error");
+        qWarning() << "Loading error: cant install versions manifest Java";
+        return downloadTasks;
+    }
 
     if(name.isEmpty()){
+        emit showNotification(QCoreApplication::translate("Error", "invalid_java_data"), "Error");
         qWarning() << "Error: invalid data";
         return downloadTasks;
     }
@@ -201,7 +222,11 @@ QList<DownloadTask> DownloadManager::downloadJava(const QString name){
     QJsonObject javaManifes;
     const QString javaDir = minecraftDirectory + "/Java/" + name + "/";
 
-    installOneFile(urlJavaManifest, javaDir + "manifest.json", &javaManifes, hashJavaManifest);
+    if(!installOneFile(urlJavaManifest, javaDir + "manifest.json", &javaManifes, hashJavaManifest)) { 
+        emit showNotification(QCoreApplication::translate("Error", "java_manifest"), "Error");
+        qWarning() << "Loading error: cant install manifest for Java" << name;
+        return downloadTasks;
+    }
     
     const QJsonObject files = javaManifes["files"].toObject(); 
     for (auto it = files.begin(); it != files.end(); ++it) {
@@ -236,7 +261,8 @@ QList<DownloadTask> DownloadManager::downloadJava(const QString name){
 }
 void DownloadManager::downloadFiles(const QList<DownloadTask> files, const QString text, const QString id){
     if(files.isEmpty()){
-        emit finished(true, id);
+        finish(true, id);
+        return;
     }
     emit showOrHideProgress(true);
     emit statusTextChanged(text);
@@ -249,17 +275,21 @@ void DownloadManager::downloadFiles(const QList<DownloadTask> files, const QStri
         installMoreFiles(dt, id);
     }
 }
-void DownloadManager::extractFile(const QString &path, const QString &outputDir, const QStringList &excludes) {
+bool DownloadManager::extractFile(const QString &path, const QString &outputDir, const QStringList &excludes) {
     QDir dir;
     if(!dir.mkpath(outputDir)){
-        qWarning() << "Error: cant create folders: " << outputDir;
-        return;
+        emit showNotification(QCoreApplication::translate("Error", "cant_create_dir"), "Error");
+        qWarning() << "Error: cant create folder: " << outputDir;
+        return false;
     }
     
     QZipReader zip(path);
     if (zip.status() != QZipReader::NoError) {
+        emit showNotification(QCoreApplication::translate("Error", "cant_open_jar"), "Error");
         qWarning() << "Cant open this jar: " << path;
-        return;
+
+        zip.close();
+        return false;
     }
 
     for (const QZipReader::FileInfo &info : zip.fileInfoList()) {
@@ -282,13 +312,22 @@ void DownloadManager::extractFile(const QString &path, const QString &outputDir,
             file.write(zip.fileData(info.filePath));
             file.close();
         }
+        else {
+            emit showNotification(QCoreApplication::translate("Error", "cant_write_file"), "Error");
+            qWarning() << "Cant write to file: " << info.filePath;
+
+            zip.close();
+            return false;
+        }
     }
     zip.close();
+    return true;
 }
 bool DownloadManager::decompressFile(const QString &inputPath, const QString &outputPath) {
     QFile inFile(inputPath);
     
     if (!inFile.open(QIODevice::ReadOnly)) {
+        emit showNotification(QCoreApplication::translate("Error", "cant_read_file"), "Error");
         qWarning() << "Cant read file: " << inputPath;
         return false;
     }
@@ -300,6 +339,7 @@ bool DownloadManager::decompressFile(const QString &inputPath, const QString &ou
     lzma_ret ret = lzma_alone_decoder(&strm, UINT64_MAX);
 
     if (ret != LZMA_OK) {
+        emit showNotification(QCoreApplication::translate("Error", "lzma_decode_error"), "Error");
         qWarning() << "LZMA not ok: " << inputPath;
         return false;
     }
@@ -317,6 +357,8 @@ bool DownloadManager::decompressFile(const QString &inputPath, const QString &ou
         
         if (ret != LZMA_OK && ret != LZMA_STREAM_END) {
             lzma_end(&strm);
+            emit showNotification(QCoreApplication::translate("Error", "lzma_decode_error"), "Error");
+            qWarning() << "LZMA error: Decompression failed for file: " << inputPath;
             return false;
         }
 
@@ -330,10 +372,12 @@ bool DownloadManager::decompressFile(const QString &inputPath, const QString &ou
     QFile outFile(outputPath);
     QFileInfo outFileInfo(outputPath);
     if(!QDir().mkpath(outFileInfo.absolutePath())){
+        emit showNotification(QCoreApplication::translate("Error", "cant_create_dir"), "Error");
         qWarning() << "Error: cant create folders: " << outFileInfo.absolutePath();
         return false;
     }
     if (!outFile.open(QIODevice::WriteOnly)) {
+        emit showNotification(QCoreApplication::translate("Error", "cant_write_file"), "Error");
         qWarning() << "Cant write file: " << outputPath;
         return false;
     }
@@ -342,11 +386,29 @@ bool DownloadManager::decompressFile(const QString &inputPath, const QString &ou
 
     return true;
 }
+bool DownloadManager::setExecutable(const QString &filePath) {
+    QFile file(filePath);
+
+    if (!file.exists()) {
+        emit showNotification(QCoreApplication::translate("Error", "exec_file_missing"), "Error");
+        qWarning() << "File not found: " << filePath;
+        return false;
+    }
+    QFile::Permissions permissions = file.permissions();
+    permissions |= QFileDevice::ExeOwner | QFileDevice::ExeGroup | QFileDevice::ExeOther;
+
+    if (!file.setPermissions(permissions)) {
+        emit showNotification(QCoreApplication::translate("Error", "cant_set_executable"), "Error");
+        qWarning() << "Failed to set permissions: " << filePath;
+        return false;
+    }
+    return true;
+}
 bool DownloadManager::installOneFile(const QString &url, const QString &path, const QString &hashFile) {
     return installOneFile(url, path, nullptr, hashFile);
 }
 bool DownloadManager::installOneFile(const QString &url, const QString &path, QJsonObject *outJsonData, const QString &hashFile) {
-    if (isStopDownload) return false;
+    if (isBreakDownload) return false;
     QDir dir;
     QFileInfo fileinfo(path);
     QFile file(path);
@@ -366,6 +428,7 @@ bool DownloadManager::installOneFile(const QString &url, const QString &path, QJ
     }
     file.close();
     if(!dir.mkpath(fileinfo.absolutePath())){
+        emit showNotification(QCoreApplication::translate("Error", "cant_create_dir"), "Error");
         qWarning() << "Error: cant create folders: " << fileinfo.absolutePath();
         return false;
     }
@@ -374,29 +437,32 @@ bool DownloadManager::installOneFile(const QString &url, const QString &path, QJ
     QEventLoop loop;
     this->currentLoop = &loop; 
 
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
 
     this->currentLoop = nullptr;
-    if (isStopDownload) {
+    if (isBreakDownload) {
         reply->abort();
         reply->deleteLater();
         return false;
     }
 
     if (reply->error() != QNetworkReply::NoError) {
-        reply->deleteLater();
+        emit showNotification(reply->errorString(), "Error");
         qWarning() << "Loading error:" << reply->errorString();
+        reply->deleteLater();
         return false;
     }
 
     QByteArray responseData = reply->readAll();
     reply->deleteLater();
     if (responseData.isNull()) {
+        emit showNotification(QCoreApplication::translate("Error", "empty_server_response"), "Error");
         qWarning() << "Error: responseData is null";
         return false;
     }
     if (!file.open(QIODevice::WriteOnly)) {
+        emit showNotification(QCoreApplication::translate("Error", "cant_write_file"), "Error");
         qWarning() << "Error: cant open file " << fileinfo.fileName();
         return false;
     }
@@ -408,37 +474,51 @@ bool DownloadManager::installOneFile(const QString &url, const QString &path, QJ
     return true;
 }
 void DownloadManager::installMoreFiles(const DownloadTask dt, const QString id){
-    if (isStopDownload) return;
+    if (isBreakDownload) return;
     QDir dir;
     QFileInfo fileinfo(dt.path);
     QFile file(dt.path);
 
-    if(isExistsAndValid(file, dt.hash)){
-        if (dt.isExtract) extractFile(dt.path, dt.outputDir, dt.excludes);
+    if(isExistsAndValid(file, dt.hash)) {
+        if (dt.isExtract) {
+            if(!extractFile(dt.path, dt.outputDir, dt.excludes)) {
+                cancelDownload(id);
+                return;
+            }
+        }
         if (dt.isDecompress) {
             QFile fileDecompress(dt.outputDir);
             if (!isExistsAndValid(fileDecompress, dt.hashDecompress)){
-                decompressFile(dt.path, dt.outputDir);
+                if(!decompressFile(dt.path, dt.outputDir)) {
+                    cancelDownload(id);
+                    return;
+                }
             }
         }
-        if (dt.isExecutable) setExecutable(dt.path);
+        if (dt.isExecutable) {
+            if(!setExecutable(dt.path)) {
+                cancelDownload(id);
+                return;
+            }
+        }
         filesDownloadedSize += dt.size;
         updateProgressBar(id);
         file.close();
         return;
     }
     file.close();
-    if(!dir.mkpath(fileinfo.absolutePath())){
+    if(!dir.mkpath(fileinfo.absolutePath())) {
+        notificationAndCancel(id, QCoreApplication::translate("Error", "cant_create_dir"), "Error");
         qWarning() << "Error: cant create folders: " << fileinfo.absolutePath();
         return;
     }
 
     QNetworkRequest request((QUrl(dt.url)));
     QNetworkReply *reply = manager->get(request);
-    activeReplies.append(reply);
+    activeReplies[id].append(reply);
     connect(reply, &QNetworkReply::finished, this, [this, reply, dt, id]() {
-        activeReplies.removeOne(reply);
-        if(isStopDownload){
+        activeReplies[id].removeOne(reply);
+        if(isBreakDownload){
             reply->deleteLater(); 
             return;
         }
@@ -447,42 +527,47 @@ void DownloadManager::installMoreFiles(const DownloadTask dt, const QString id){
             if (outFile.open(QIODevice::WriteOnly)) {
                 outFile.write(reply->readAll());
                 outFile.close();
-                if (dt.isExtract) extractFile(dt.path, dt.outputDir, dt.excludes);
-                if (dt.isDecompress) decompressFile(dt.path, dt.outputDir);
-                if (dt.isExecutable) setExecutable(dt.path);
+                if (dt.isExtract) {
+                    if(!extractFile(dt.path, dt.outputDir, dt.excludes)) {
+                        cancelDownload(id);
+                        return;
+                    }
+                }
+                if (dt.isDecompress) {
+                    if(!decompressFile(dt.path, dt.outputDir)) {
+                        cancelDownload(id);
+                        return;
+                    }
+                }
+                if (dt.isExecutable) {
+                    if(!setExecutable(dt.path)) {
+                        cancelDownload(id);
+                        return;
+                    }
+                }
                 filesDownloadedSize += dt.size;
                 updateProgressBar(id);
             }else{
-                qWarning() << "Error: cant write data to file";    
+                notificationAndCancel(id, QCoreApplication::translate("Error", "cant_write_file"), "Error");
+                qWarning() << "Error: cant write data to file";
+                return;
             }
-        }else{
+        } else {
+            if(reply->error() == QNetworkReply::OperationCanceledError) { return; }
+            notificationAndCancel(id, reply->errorString(), "Error");
             qWarning() << "Error:" << reply->errorString();
+
+            return;
         }
         reply->deleteLater();
     });
 }
-void DownloadManager::setExecutable(const QString &filePath) {
-    QFile file(filePath);
 
-    if (!file.exists()) {
-        qWarning() << "File not found: " << filePath;
-        return;
-    }
-    QFile::Permissions permissions = file.permissions();
-    permissions |= QFileDevice::ExeOwner | QFileDevice::ExeGroup | QFileDevice::ExeOther;
-
-    if (!file.setPermissions(permissions)) {
-        qWarning() << "Failed to set permissions: " << filePath;
-        return;
-    }
-}
 void DownloadManager::updateProgressBar(const QString &id){
     quint64 prc = filesTotalSize > 0 ? filesDownloadedSize * 1000/filesTotalSize : 1000;
     if(filesDownloadedSize >= filesTotalSize){
-        prc = 0;
-        emit statusTextChanged(QCoreApplication::translate("MainWindow", "install_disable"));
-        emit finished(true, id);
-        emit showOrHideProgress(false);
+        finish(true, id);
+        return;
     }
     emit progressUpdated(prc);
 }
@@ -491,10 +576,11 @@ void DownloadManager::updateVersions() {
     QString url_versions = "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json";
     QNetworkReply* reply = manager->get(QNetworkRequest(QUrl(url_versions)));
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply](){
         reply->deleteLater();
 
         if (reply->error() != QNetworkReply::NoError) {
+            emit showNotification(reply->errorString(), "Error");
             qWarning() << "Loading error:" << reply->errorString();
             if (!emit updatedVersions()){emit renderVersions({}, {});}
             return;
@@ -504,12 +590,14 @@ void DownloadManager::updateVersions() {
         QJsonDocument json_doc = QJsonDocument::fromJson(responseData);
         
         if (json_doc.isNull()) {
+            emit showNotification(QCoreApplication::translate("Error", "bad_json_data"), "Error");
             qWarning() << "JSON is null";
             return;
         }
 
         QFile file_versions("versions.llv");
         if (!file_versions.open(QIODevice::WriteOnly)) {
+            emit showNotification(QCoreApplication::translate("Error", "cant_save_cache"), "Error");
             qWarning() << "Cant open versions file";
             return;
         }

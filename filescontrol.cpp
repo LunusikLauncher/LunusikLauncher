@@ -1,6 +1,6 @@
 #include "filescontrol.h"
 
-FilesControl::FilesControl(QObject *parent) : QObject(parent){}
+FilesControl::FilesControl(QObject *parent) : Manager(parent){}
 
 bool FilesControl::checkRules(const QJsonArray rules, const SystemConfig &system){
     bool isInstall = false;
@@ -21,7 +21,11 @@ bool FilesControl::checkRules(const QJsonArray rules, const SystemConfig &system
             else if (action == "disallow") isInstall = false;
             continue;
         }
-        if (osRule["name"].toString().replace("osx", "macos") == system.name) {
+
+        QString osName = osRule["name"].toString();
+        if(osName == "osx") osName = "macos";
+
+        if (osName == system.name) {
             bool versionMatches = true;
             bool archMatches = true;
 
@@ -41,7 +45,11 @@ bool FilesControl::checkRules(const QJsonArray rules, const SystemConfig &system
                 }
             }
             if (osRule.contains("arch")){
-                archMatches = osRule["arch"].toString().replace("86", "32").replace("x", "") == system.arch;
+                QString osArch = osRule["arch"].toString();
+                osArch.remove("x");
+                osArch.replace("86", "32");
+
+                archMatches = osArch == system.arch;
             }
 
             if (versionMatches && archMatches) {
@@ -66,12 +74,28 @@ bool FilesControl::isExistsAndValid(QFile &file, const QString &hashFile){
     if (!file.exists()) {
         return false;
     }
-    if (!hashFile.isEmpty()){
+    if (!hashFile.isNull() && !hashFile.isEmpty()){
         if (!file.open(QIODevice::ReadOnly)) {
-            qWarning() << "Cant open file";
+            emit showNotification(QCoreApplication::translate("Error", "cant_read_file"), "Error");
+            qWarning() << "Cant open file: " << file.fileName();
             return false;
         }
         QCryptographicHash hashGen(QCryptographicHash::Sha1); 
+        
+        char buffer[65536]; 
+        while (!file.atEnd()) {
+            qint64 readBytes = file.read(buffer, sizeof(buffer));
+            if (readBytes <= 0) {
+                if (file.error() != QFile::NoError) {
+                    emit showNotification(QCoreApplication::translate("Error", "cant_read_file"), "Error");
+                    qWarning() << "Read error:" << file.errorString();
+                    return false;
+                }
+                break;
+            }
+            hashGen.addData(QByteArrayView(buffer, readBytes));
+        }
+
         if (!hashGen.addData(&file)) { 
             return false;
         }

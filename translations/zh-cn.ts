@@ -13,7 +13,7 @@
     </message>
     <message>
         <source>launcher_version</source>
-        <translation>Lunusik Launcher v0.3.3 beta</translation>
+        <translation>v0.4.0 beta</translation>
     </message>
     <message>
         <source>current_language</source>
@@ -120,6 +120,10 @@
         <translation>正在验证游戏文件</translation>
     </message>
     <message>
+        <source>cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
         <source>settings</source>
         <translation>启动器设置</translation>
     </message>
@@ -138,6 +142,86 @@
     <message>
         <source>RAM</source>
         <translation>分配运行内存 (MB)</translation>
+    </message>
+</context>
+
+<context>
+    <name>Error</name>
+    <message>
+        <source>invalid_version_data</source>
+        <translation>收到无效的版本数据。</translation>
+    </message>
+    <message>
+        <source>invalid_java_data</source>
+        <translation>收到无效的Java数据。</translation>
+    </message>
+    <message>
+        <source>java_manifest</source>
+        <translation>无法加载Java清单文件。</translation>
+    </message>
+    <message>
+        <source>java_versions</source>
+        <translation>无法加载Java版本列表。</translation>
+    </message>
+    <message>
+        <source>assets_manifest</source>
+        <translation>无法加载Minecraft %1的游戏资源。</translation>
+    </message>
+    <message>
+        <source>version_manifest</source>
+        <translation>无法加载Minecraft %1的配置。</translation>
+    </message>
+    <message>
+        <source>cant_create_dir</source>
+        <translation>无法创建游戏目录。</translation>
+    </message>
+    <message>
+        <source>cant_write_file</source>
+        <translation>无法将数据写入磁盘。</translation>
+    </message>
+    <message>
+        <source>cant_read_file</source>
+        <translation>无法从磁盘读取下载的文件。</translation>
+    </message>
+    <message>
+        <source>cant_copy_file</source>
+        <translation>无法复制游戏文件。</translation>
+    </message>
+    <message>
+        <source>cant_open_jar</source>
+        <translation>无法打开游戏存档。</translation>
+    </message>
+    <message>
+        <source>lzma_decode_error</source>
+        <translation>无法解压游戏组件。文件可能已损坏。</translation>
+    </message>
+    <message>
+        <source>empty_server_response</source>
+        <translation>从服务器收到空数据。请稍后重试。</translation>
+    </message>
+    <message>
+        <source>exec_file_missing</source>
+        <translation>缺少必要的游戏组件。请重新安装该版本。</translation>
+    </message>
+    <message>
+        <source>cant_set_executable</source>
+        <translation>无法设置文件权限。请检查启动器的访问权限。</translation>
+    </message>
+    <message>
+        <source>cant_save_cache</source>
+        <translation>无法保存本地版本列表缓存。请检查磁盘写入权限。</translation>
+    </message>
+</context>
+
+<context>
+    <name>Success</name>
+    <message>
+        <source>install_success_version</source>
+        <translation>Minecraft %1 安装成功！</translation>
+    </message>
+    <message>
+        <source>update_success_versions</source>
+        <translation>版本列表更新成功！</translation>
     </message>
 </context>
 </TS>

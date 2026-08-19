@@ -43,6 +43,7 @@ echo %BLUE%=== Copying licenses to the build ===%RESET%
 
 copy /Y "..\..\..\LICENSE" "." > nul
 copy /Y "..\..\..\COPYING.md" "." > nul
+copy /Y "..\..\..\fonts\OFL.txt" "." > nul
 
 
 

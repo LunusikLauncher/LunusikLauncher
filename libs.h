@@ -47,6 +47,7 @@
 #include <QDesktopServices>
 #include <lzma.h>
 #include <QStackedWidget>
+#include <QFontDatabase>
 #if defined(Q_OS_WIN)
 #include <windows.h>
 #elif defined(Q_OS_LINUX)
@@ -55,6 +56,8 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
+
+constexpr int BASE_NOTIFICATION_DURATION = 2300;
 
 struct SystemConfig {
     QString name;

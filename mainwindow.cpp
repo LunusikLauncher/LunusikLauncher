@@ -2,7 +2,7 @@
 #include "filescontrol.h"
 
 MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent) 
-    : QMainWindow(parent){
+    : QMainWindow(parent) {
 
     DOWNLOAD_MANAGER = new DownloadManager();
     VERSIONS_MANAGER = new VersionsManager(DOWNLOAD_MANAGER);
@@ -16,13 +16,16 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
 
     connect(VERSIONS_MANAGER, &VersionsManager::renderVersions, this, &MainWindow::renderVersions);
     connect(DOWNLOAD_MANAGER, &DownloadManager::renderVersions, this, &MainWindow::renderVersions);
+
     connect(this, &MainWindow::setMinecraftDirectoryVM, VERSIONS_MANAGER, &VersionsManager::setMinecraftDirectory);
     connect(this, &MainWindow::loadVersions, VERSIONS_MANAGER, &VersionsManager::loadVersions);
+    connect(VERSIONS_MANAGER, &VersionsManager::showNotification, this, &MainWindow::showNotification);
 
     connect(threadDownloadManager, &QThread::started, DOWNLOAD_MANAGER, &DownloadManager::init);
     connect(DOWNLOAD_MANAGER, &DownloadManager::statusTextChanged, this, &MainWindow::updateProgressBarTitle);
     connect(DOWNLOAD_MANAGER, &DownloadManager::progressUpdated, this, &MainWindow::updateProgress);
     connect(DOWNLOAD_MANAGER, &DownloadManager::showOrHideProgress, this, &MainWindow::showOrHideProgress);
+    connect(DOWNLOAD_MANAGER, &DownloadManager::showNotification, this, &MainWindow::showNotification);
     connect(this, &MainWindow::downloadMinecraft, DOWNLOAD_MANAGER, &DownloadManager::downloadMinecraft);
     connect(this, &MainWindow::setMinecraftDirectoryDM, DOWNLOAD_MANAGER, &DownloadManager::setMinecraftDirectory);
     threadDownloadManager->start();
@@ -31,7 +34,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     setupStyles();
     readSettings();
     
-    auto *centralWidget = new QWidget(this);
+    centralWidget = new QWidget(this);
     auto *WindowLayout = new QVBoxLayout(centralWidget);
     WindowLayout->setSpacing(0);
     WindowLayout->setContentsMargins(0, 0, 0, 0);
@@ -81,39 +84,14 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     logoContainer->addWidget(iconBox);
     logoContainer->addWidget(logoText);
     logoContainer->addStretch();
-    
-    iconBox->setStyleSheet(R"(
-        #logoIconContainer {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                                        stop:0 #8a2be2, stop:1 #6a0dad);
-            border-radius: 10px;
-        }
-    )");
 
 
     auto *userPanel = new QHBoxLayout();
     
     usernameLabel = new QLabel();
-    usernameLabel->setStyleSheet(R"(
-        QLabel { 
-            color: #ece2ff;
-            font-size: 14px; 
-            font-weight: 600;
-        }
-    )");
+    usernameLabel->setObjectName("usernameLabel");
+
     usernameEL = new EditableLabel();
-    usernameEL->setStyleSheet(R"(
-        QLabel, QLineEdit{
-            color: #e0d6f2;
-            margin-right: 10px; 
-            font-size: 15px; 
-            font-weight: 500;
-        } 
-        QLabel:hover, QLineEdit:hover{ 
-            color: #c2acec; 
-            text-decoration: underline; 
-        }
-    )");
     usernameEL->setText(username);
     connect(usernameEL, &EditableLabel::textUpdate, this, &MainWindow::changeUsername);
 
@@ -123,20 +101,6 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
         SettingsOverlay->raise();
     });
     settingsBtn->setObjectName("settingsBtn");
-    settingsBtn->setStyleSheet(R"(
-        QPushButton#settingsBtn{
-            background: transparent;
-            background-color: transparent;
-            border: none;
-            background-image: url(:/icons/settings.svg);
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-        QPushButton#settingsBtn:hover{
-            background-image: url(:/icons/settings_hover.svg);
-        }
-    )");
-    
     settingsBtn->setFixedSize(30, 30);
     settingsBtn->setCursor(Qt::PointingHandCursor);
     
@@ -144,14 +108,10 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     connect(openFolderBtn, &QPushButton::clicked, this, [=]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(minecraftDirectory));
     });
-    openFolderBtn->setObjectName("openFolderBtn");
+    openFolderBtn->setObjectName("buttonIcon");
     openFolderBtn->setStyleSheet(R"(
         QPushButton {
-            border: none;
-            background-color: transparent;
             background-image: url(:/icons/folder.svg);
-            background-repeat: no-repeat;
-            background-position: center;
         }
         QPushButton:hover {
             background-image: url(:/icons/folder_hover.svg);
@@ -160,15 +120,12 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     openFolderBtn->setCursor(Qt::PointingHandCursor);
     openFolderBtn->setFixedSize(30, 30);
 
-    auto *showInfoBtn = new QPushButton(); 
+    auto *showInfoBtn = new QPushButton();
     connect(showInfoBtn, &QPushButton::clicked, this, &MainWindow::showInfo);
+    showInfoBtn->setObjectName("buttonIcon");
     showInfoBtn->setStyleSheet(R"(
         QPushButton {
-            border: none;
-            background-color: transparent;
             background-image: url(:/icons/info.svg);
-            background-repeat: no-repeat;
-            background-position: center;
         }
         QPushButton:hover {
             background-image: url(:/icons/info_hover.svg);
@@ -207,20 +164,12 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     versionsTitleText->setObjectName("section-title");
 
     auto* btnUpdateVersions = new QPushButton();
+    connect(btnUpdateVersions, &QPushButton::clicked, this, &MainWindow::clickUpdateVersions);
 
-    connect(btnUpdateVersions, &QPushButton::clicked, this, [this]() {
-        emit loadVersions(true); 
-    });
-
-    btnUpdateVersions->setObjectName("btnUpdateVersions");
+    btnUpdateVersions->setObjectName("buttonIcon");
     btnUpdateVersions->setStyleSheet(R"(
-        QPushButton#btnUpdateVersions{
-            background: transparent;
-            background-color: transparent;
-            border: none;
+        QPushButton{
             background-image: url(:/icons/update_versions.svg);
-            background-repeat: no-repeat;
-            background-position: center;
         }
     )");
     btnUpdateVersions->setFixedSize(30, 30);
@@ -236,14 +185,6 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     auto *latestVersionsBox = new QFrame();
     latestVersionsBox->setAttribute(Qt::WA_StyledBackground);
     latestVersionsBox->setObjectName("latestVersionsBox");
-    latestVersionsBox->setStyleSheet(R"(
-        #latestVersionsBox {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                                        stop:0 #4c1d95, stop:1 #6d28d9);
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-    )");
     latestVersionsLayout = new QGridLayout(latestVersionsBox);
     latestVersionsLayout->setContentsMargins(20, 20, 20, 20);
     latestVersionsLayout->setSpacing(15);
@@ -252,77 +193,8 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     versionsSection->addWidget(latestVersionsBox);
 
     auto *versionList = new QScrollArea();
-    versionList->setStyleSheet(R"(        
-        QScrollBar:vertical {
-            border: none;
-            background: #2d1b3b;
-            width: 10px;
-            margin: 0px;
-            border-radius: 5px;
-        }
-    )");
 
     auto *VC = new QWidget();
-    VC->setStyleSheet(R"(
-        QWidget#versionItem {
-            background: rgba(53, 28, 90, 0.5); 
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: 1px solid transparent;
-        }
-
-        QWidget#versionItem:hover {
-            background: rgba(74, 44, 126, 0.6);
-            border: 1px solid #6a0dad;
-        }
-
-        QLabel#versionType {
-            font-size: 12px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            background: #4a2c7e;
-            color: #c9a8ff;
-        }
-        QLabel#versionName {
-            font-size: 16px; 
-            font-weight: 500; 
-            color: #e0d6f2;
-        }
-
-        QLabel#versionType[type="release"] {
-            background: #4caf50;
-            color: white;
-        }
-
-        QPushButton#favoriteBtn{
-            background: transparent;
-            background-color: transparent;
-            border: none;
-            background-image: url(:/icons/favorite.svg);
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-        QPushButton#favoriteBtn:checked{
-            background-image: url(:/icons/favorite_checked.svg);
-        }
-        QPushButton#favoriteBtn:hover{
-            background-image: url(:/icons/favorite_hover.svg);
-        }
-
-        QPushButton#versionButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8a2be2, stop:1 #6a0dad);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        QPushButton#versionButton:hover, QPushButton#serverButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #7223bd, stop:1 #520a85)
-    })");
-    
     VL = new QVBoxLayout(VC);
     VL->setSpacing(10);
     VL->setContentsMargins(0, 5, 5, 0);
@@ -334,26 +206,6 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
 
     auto *rightSidebar = new QVBoxLayout();
     auto *filtersBox = new QGroupBox();
-    filtersBox->setStyleSheet(R"(
-        QPushButton {
-            padding: 8px 16px;
-            font-size: 14px;
-            border: 1px solid #3a2a4a;
-            border-radius: 6px;
-            background: #2a1b3b;
-            color: #a78bfa;
-        }
-
-        QPushButton:checked {
-            background: #6d28d9;
-            color: white;
-            border-color: #8b5cf6;
-        }
-        QPushButton:hover {
-            background: #4c1d95;
-            color: #ddd6fe;
-        }
-    )");
     filtersBox->setMaximumHeight(250);
     filtersBox->setMinimumHeight(160);
     filtersBox->setObjectName("filters-section");
@@ -377,44 +229,29 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     searchInp = new QLineEdit();
     searchInp->setObjectName("searchInp");
     searchInp->setFixedWidth(230);
-    searchInp->setStyleSheet(R"(
-        QLineEdit#searchInp {
-            selection-background-color: #6d28d9;
-        }
-    )");
     searchInp->setText(searchQuery);
     connect(searchInp, &QLineEdit::textChanged, this, &MainWindow::searchInpChanged);
 
     typeFlow = new FlowLayout(nullptr, 0, 8, 8);
     QStringList types = {"filter_all", "filter_release", "filter_snapshot", "filter_old_alpha", "filter_old_beta"};
-    if(filters.contains("all")){
-        for(const QString &t : types) {
-            auto *btn = new QPushButton();
-            btn->setCheckable(true);
-            btn->setCursor(Qt::PointingHandCursor);
-            btn->setObjectName(t.sliced(7));
+    bool isAllSelected = filters.contains("all");
+
+    for(const QString &t : types) {
+        auto *btn = new QPushButton();
+        QString shortType = t.sliced(7);
+
+        btn->setCheckable(true);
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setObjectName("сheckableBtn");
+        btn->setProperty("type", shortType);
+        if(isAllSelected || filters.contains(shortType)){
             btn->setChecked(true);
-            btn->setMinimumHeight(30); 
-            filterBtns.append(btn);
-            connect(btn, &QPushButton::toggled, this, &MainWindow::clickFilterBtn);
-
-            typeFlow->addWidget(btn);
         }
-    }else{
-        for(const QString &t : types) {
-            auto *btn = new QPushButton();
-            btn->setCheckable(true);
-            btn->setCursor(Qt::PointingHandCursor);
-            btn->setObjectName(t.sliced(7));
-            if(filters.contains(btn->objectName())){
-                btn->setChecked(true);
-            }
-            btn->setMinimumHeight(30); 
-            filterBtns.append(btn);
-            connect(btn, &QPushButton::toggled, this, &MainWindow::clickFilterBtn);
+        btn->setMinimumHeight(30); 
+        filterBtns.append(btn);
+        connect(btn, &QPushButton::toggled, this, &MainWindow::clickFilterBtn);
 
-            typeFlow->addWidget(btn);
-        }
+        typeFlow->addWidget(btn);
     }
 
     filterLayout->addWidget(searchInp);
@@ -430,15 +267,13 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     serverTitle->setSpacing(10);
     serverTitle->setContentsMargins(0, 0, 0, 20);
     auto *windowServerBtn = new QPushButton();
-    windowServerBtn->setObjectName("window-server-btn");
+    windowServerBtn->setObjectName("buttonIcon");
     windowServerBtn->setFixedSize(30, 30);
     windowServerBtn->setStyleSheet(R"(
-        QPushButton#window-server-btn {
-            background-color: transparent;
-            border: none;
+        QPushButton {
             image: url(:/icons/arrow_right.svg);
         }
-        QPushButton#window-server-btn:hover {
+        QPushButton:hover {
             image: url(:/icons/arrow_right_hover.svg);
         }
     )");
@@ -460,37 +295,15 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     serverLayout->addLayout(serverTitle);
 
     versionLabel = new QLabel();
-    versionLabel->setObjectName("name-version-server");
-    versionLabel->setStyleSheet(R"(
-        QLabel{
-            color: #c9a8ff;
-            font-weight: 600;
-            font-size: 14px;
-        }
-    )");
+    versionLabel->setObjectName("listLabels");
     serverLayout->addWidget(versionLabel);
 
     auto *scrollSettings = new QScrollArea();
     scrollSettings->setWidgetResizable(true);
     scrollSettings->setMinimumHeight(60);
-    scrollSettings->setStyleSheet(R"(        
-        QScrollBar:vertical {
-            border: none;
-            background: #2d1b3b;
-            width: 10px;
-            margin: 0px;
-            border-radius: 5px;
-        }
-    )"); 
 
     auto *formWidget = new QWidget();
-    formWidget->setStyleSheet(R"(
-        QLabel{
-            color: #c9a8ff;
-            font-weight: 600;
-            font-size: 14px;
-        }
-    )");
+    formWidget->setObjectName("listLabels");
     auto *form = new QFormLayout(formWidget);
     form->setLabelAlignment(Qt::AlignLeft);
     form->setFormAlignment(Qt::AlignLeft);
@@ -598,25 +411,12 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     progressBarPrecent = new QLabel("    ");
     progressBarPrecent->setObjectName("section-title");
     auto *progressCancel = new QHBoxLayout();
-    QPushButton *btnCancel = new QPushButton("Cancel");
-    btnCancel->setStyleSheet(R"(
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8a2be2, stop:1 #6a0dad);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        QPushButton:hover{
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #7223bd, stop:1 #520a85);
-        }
-    )");
+    btnCancel = new QPushButton();
+    btnCancel->setObjectName("cancelButton");
+    btnCancel->setProperty("id", "0");
     btnCancel->installEventFilter(this);
     btnCancel->setCursor(Qt::PointingHandCursor);
-    connect(btnCancel, QPushButton::clicked, DOWNLOAD_MANAGER, &DownloadManager::cancelDownload);
+    connect(btnCancel, QPushButton::clicked, this, &MainWindow::clickBtnCancel);
     progressCancel->addWidget(btnCancel);
     progressCancel->addStretch();
 
@@ -628,8 +428,6 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     progressBar = new QProgressBar();
     progressBar->setFixedHeight(8);
     progressBar->setTextVisible(false);
-    progressBar->setStyleSheet("QProgressBar { background: #2d1b4e; border-radius: 4px; } "
-                        "QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8a2be2, stop:1 #6a0dad); border-radius: 4px;}");
     progressBar->setRange(0, 1000);
     progressBar->setValue(0);
 
@@ -643,18 +441,13 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     // --- FOOTER ---
     footer = new QLabel();
     footer->setAlignment(Qt::AlignCenter);
-    footer->setStyleSheet("border-top: 1px solid #4a2c7e; color: #555; padding: 10px; font-size: 10px;");
+    footer->setObjectName("footer");
     WindowLayout->addWidget(footer);
     
     // -- SETTINGS ---
     SettingsOverlay = new QWidget(centralWidget);
     SettingsOverlay->setObjectName("settingsOverlay");
     SettingsOverlay->hide();
-    SettingsOverlay->setStyleSheet(R"(
-        QWidget#settingsOverlay{
-            background-color: rgba(13, 8, 22, 217);
-        }
-    )");
     auto *SettingsOverlayLayout = new QVBoxLayout(SettingsOverlay);
     SettingsOverlayLayout->setAlignment(Qt::AlignCenter);
     auto *settingsModal = new QWidget();
@@ -662,24 +455,11 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     settingsModal->setFixedWidth(456);
     settingsModal->setMaximumHeight(760);
     settingsModal->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
-    settingsModal->setStyleSheet(R"(
-        QWidget#settingsModal {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                                        stop:0 #2a1546, stop:1 #1a102b);
-            border-radius: 15px;
-            border: 1px solid #4a2c7e;
-        }
-    )");
     SettingsOverlayLayout->addWidget(settingsModal);
     auto *settingsModalLayout = new QVBoxLayout(settingsModal);
     SettingsOverlayLayout->addWidget(settingsModal);
     settingsModalLayout->setContentsMargins(20, 20, 20, 20);
     auto *settingsModalHeader = new QWidget();
-    settingsModalHeader->setStyleSheet(R"(
-        QWidget#settingsModalHeader {
-            border-bottom: 1px solid #4a2c7e;
-        }
-    )");
     settingsModalHeader->setObjectName("settingsModalHeader");
     auto *settingsModalHeaderLayout = new QHBoxLayout(settingsModalHeader);
     settingsModalHeaderLayout->setContentsMargins(0, 0, 0, 12);
@@ -696,19 +476,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     });
     settingsCloseBtn->setObjectName("closeBtn");
     settingsCloseBtn->setCursor(Qt::PointingHandCursor);
-    settingsCloseBtn->setStyleSheet(R"(
-        QPushButton#closeBtn {
-            background: none;
-            border: none;
-            color: #c9a8ff;
-            font-size: 24px;
-            font-weight: bold;
-        }
 
-        QPushButton#closeBtn:hover {
-            color: #ff4545;
-        }
-    )");
     settingsModalHeaderLayout->addWidget(iconModalSettings);
     settingsModalHeaderLayout->addSpacing(10);
     settingsModalHeaderLayout->addWidget(settingsHeaderTitle);
@@ -717,13 +485,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     settingsModalLayout->addWidget(settingsModalHeader);
 
     auto *settingsModalBody = new QWidget();
-    settingsModalBody->setStyleSheet(R"(
-        QLabel{
-            color: #c9a8ff;
-            font-weight: 600;
-            font-size: 14px;
-        }
-    )");
+    settingsModalBody->setObjectName("listLabels");
     auto *settingsModalBodyLayout = new QVBoxLayout(settingsModalBody);
     auto *FLSLP = new QHBoxLayout();
     FLSLPL = new QLabel();
@@ -784,7 +546,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     settingsModalLayout->addWidget(settingsModalBody);
     settingsModalLayout->addStretch();
     connect(settingsLanguage, &QComboBox::currentIndexChanged, this, &MainWindow::changeLanguage);
-    
+
     QSettings settings;
     QString lang = settings.value("lang", "en-en").toString();
     int i = settingsLanguage->findData(lang);
@@ -796,13 +558,12 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
         this->show();
         splash->finish(this);
         splash->deleteLater();
-        QObject::disconnect(*connection);
+        disconnect(*connection);
     }, Qt::QueuedConnection);
 
     serverContainer->hide();
+    this->resize(1180, 920);
     emit loadVersions();
-
-    resize(1180, 920);
 
 }
 MainWindow::~MainWindow() {
@@ -849,15 +610,49 @@ int MainWindow::getTotalRAM() {
     return 4096;
 }
 
+
 // --- UI & STYLING ---
 void MainWindow::setupStyles() {
     this->setStyleSheet(R"(
-        QLabel#section-title {
-            font-size: 18px; 
-            color: #caa8ff;
+        QMainWindow, QLabel, QPushButton, QLineEdit, QComboBox, QGroupBox {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        QWidget#header{
-            border-bottom: 1px solid #4a2c7e;
+        QMainWindow { 
+            background: #150f20; 
+        }
+        #logoIconContainer {
+            background: #7c3aed;
+            border-radius: 8px;
+        }
+        QLabel#usernameLabel { 
+            color: #ece2ff;
+            font-size: 14px; 
+            font-weight: 600;
+        }
+        EditableLabel QLabel, EditableLabel QLineEdit {
+            font-family: 'Minecraft';
+            color: #e0d6f2;
+            margin-right: 10px; 
+            font-size: 15px; 
+            font-weight: 500;
+        } 
+        EditableLabel QLabel:hover, EditableLabel QLineEdit:hover { 
+            color: #caa8ff; 
+            text-decoration: underline; 
+        }
+        QLabel#section-title {
+            font-size: 16px; 
+            font-weight: 600;
+            color: #e2d5f8;
+            letter-spacing: -0.01em;
+        }
+        #listLabels QLabel {
+            color: #caa8ff;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        QWidget#header {
+            border-bottom: 1px solid #231834;
             background: transparent;
         }
         QScrollArea, QScrollArea > QWidget > QWidget {
@@ -868,70 +663,72 @@ void MainWindow::setupStyles() {
         QWidget#versions-section,
         QGroupBox#filters-section,
         QWidget#server-section {
-            background: rgba(42, 21, 70, 0.6);
-            border-radius: 24px;
+            background: #1b1329; 
+            border-radius: 16px; 
             padding: 20px;
-            border: 1px solid #4a2c7e;
+            border: 1px solid #2d2045; 
         }
         QGroupBox#filters-section,
-        QWidget#server-section{
+        QWidget#server-section {
             min-width: 255px;
             max-width: 255px;
         }
-
-        QScrollBar::handle:vertical {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                                        stop:0 #6a3093, stop:1 #a044ff);
-            border: 2px solid #2d1b3b;
-            min-height: 20px;
-            border-radius: 5px;
+        #latestVersionsBox {
+            background: #231934;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #382854;
         }
-
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-            border: none;
-            background: none;
-            height: 0px;
+         QWidget#versionItem {
+            background: #231934; 
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #2d2045;
         }
-        
-        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-            background: none;
+        QWidget#versionItem:hover {
+            background: #2b1f40;
+            border: 1px solid #4a346b;
         }
-
+        QLabel#versionName {
+            font-size: 16px; 
+            font-weight: 500; 
+            color: #e0d6f2;
+        }
+        QLabel#versionType {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: #362456;
+            color: #caa8ff;
+        }
+        QLabel#versionType[type="release"] {
+            background: #10b981;
+            color: #ffffff;
+        }
         QLineEdit, QSpinBox, QComboBox {
-            padding: 6px 7px;
-            font-size: 14px;
-            border: 1px solid #3a2a4a;
-            border-radius: 6px;
-            background: #2a1b3b;
-            color: white;
-            margin-bottom: 5px;
+            padding: 8px 12px;
+            font-size: 13px;
+            border: 1px solid #2e2245;
+            border-radius: 8px; 
+            background: #211733;
+            color: #f3f0f7;
         }
         QSpinBox, QComboBox, QLineEdit#motd {
             font-size: 13px;
-            padding: 6px 5px;
+            padding: 8px 10px;
             color: #e0d6f2;
             min-width: 80px;
         }
-        QPushButton#get-path {
-            padding: 7px 12px;
-            font-size: 14px;
-            border: 1px solid #3a2a4a;
-            border-radius: 8px;
-            background: #2a1b3b;
-            color: #a78bfa;
+        QLineEdit#searchInp {
+            selection-background-color: #6d28d9;
         }
-        QPushButton#get-path:hover {
-            border-color: #8a2be2;
+        QLineEdit:focus, QSpinBox:focus, QComboBox:focus {
+            border: 1px solid #7c3aed; 
+            background: #241938;
         }
-        QPushButton#get-path:pressed {
-            background: #6d28d9;
-            color: white;
-            border-color: #8a2be2;
-        }
-        QLineEdit:focus, QSpinBox:focus, QComboBox:focus, 
         QLineEdit:hover, QSpinBox:hover, QComboBox:hover {
-            border: 1px solid #8a2be2;
-            outline: none;
+            border: 1px solid #4c3085;
         }
         QSpinBox::up-button, QSpinBox::down-button {
             width: 0px;
@@ -940,54 +737,239 @@ void MainWindow::setupStyles() {
         }
         QComboBox::drop-down {
             border: none;
-            width: 25px; 
+            width: 28px; 
         }
-
         QComboBox::down-arrow {
             image: url(:/icons/arrow_down.svg);
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
         }
         QComboBox::down-arrow:on {
             image: url(:/icons/arrow_up.svg);
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
         }
-
         QComboBox QAbstractItemView {
-            background-color: #2a1b3b;
-            color: #a78bfa;
-            border: 1px solid #4a2c7e;
-            selection-background-color: #4a2c7e;
+            background-color: #1b1329;
+            color: #caa8ff;
+            border: 1px solid #362952;
+            selection-background-color: #362952;
             selection-color: white;
             outline: none; 
-            border-radius: 6px; 
+            border-radius: 8px; 
         }
-
         QComboBox QAbstractItemView::item {
-            min-height: 30px;
+            min-height: 32px;
             padding-left: 10px;
         }
-
         QComboBox QAbstractItemView::item:hover {
-            background-color: #4c1d95;
+            background-color: #5b21b6;
             color: white;
         }
-
-        QPushButton#serverButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8a2be2, stop:1 #6a0dad);
+        QPushButton#settingsBtn {
+            background: transparent;
+            border: none;
+            background-image: url(:/icons/settings.svg);
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        QPushButton#settingsBtn:hover {
+            background-image: url(:/icons/settings_hover.svg);
+        }
+        QPushButton#buttonIcon {
+            border: none;
+            background-color: transparent;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        QPushButton#favoriteBtn {
+            background: transparent;
+            border: none;
+            background-image: url(:/icons/favorite.svg);
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        QPushButton#favoriteBtn:checked {
+            background-image: url(:/icons/favorite_checked.svg);
+        }
+        QPushButton#favoriteBtn:hover {
+            background-image: url(:/icons/favorite_hover.svg);
+        }
+        QPushButton#get-path {
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #362952;
+            border-radius: 8px;
+            background: #211733;
+            color: #bfa5f7;
+        }
+        QPushButton#get-path:hover {
+            border-color: #6343b3;
+            background: #271c3c;
+        }
+        QPushButton#get-path:pressed {
+            background: #442a85;
+            color: white;
+            border-color: #6343b3;
+        }
+        QPushButton#versionButton, QPushButton#cancelButton, QPushButton#serverButton {
+            background: #7c3aed;
             color: white;
             border: none;
-            padding: 5px 15px;
-            border-radius: 7px;
-            font-weight: 500;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 600;
             font-size: 13px;
         }
-        QMainWindow { 
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
-                                    stop:0 #1a102b, 
-                                    stop:1 #2d1b4e);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+        QPushButton#versionButton:hover, QPushButton#cancelButton:hover, QPushButton#serverButton:hover {
+            background: #6d28d9;
+        }
+        QPushButton#versionButton:pressed, QPushButton#cancelButton:pressed, QPushButton#serverButton:pressed {
+            background: #5b21b6;
+        }
+        QPushButton#сheckableBtn {
+            padding: 8px 16px;
+            font-size: 14px;
+            border: 1px solid #3a2a4a;
+            border-radius: 8px;
+            background: #2a1b3b;
+            color: #a78bfa;
+        }
+        QPushButton#сheckableBtn:checked {
+            background: #6d28d9;
+            color: white;
+            border-color: #8b5cf6;
+        }
+        QPushButton#сheckableBtn:hover {
+            background: #4c1d95;
+            color: #ddd6fe;
+        }
+        QPushButton#closeBtn {
+            background: none;
+            border: none;
+            color: #caa8ff;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        QPushButton#closeBtn:hover {
+            color: #ef4444;
+        }
+        QWidget#latest-version-card {
+            background: #231934; /* Плотный слой, идеально сочетающийся с фоном панели */
+            border-radius: 12px; /* Привели к стандарту внутренних карточек */
+            padding: 15px; /* Исправлено: добавлен px */
+            border: 1px solid #382854; /* Исправлено: добавлен px, убран белый контур */
+        }
+        QWidget#latest-version-card:hover {
+            background: #2b1f40;
+            border-color: #4a346b;
+        }
+        QWidget#latest-version-card-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+        QWidget#latest-version-card-type {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: #caa8ff; /* Более благородный оттенок фиолетового */
+        }
+        QWidget#latest-version-card-date {
+            font-size: 12px;
+            color: #9381b5; /* Приглушенный цвет для второстепенных данных */
+        }
+        QPushButton#latest-version-card-button {
+            background: #10b981; /* Мятно-зеленый (оставляем, если это кнопка "Скачать") */
+            font-size: 13px;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px; /* Скругление соответствует общей дизайн-системе */
+            font-weight: 600;
+        }
+        QPushButton#latest-version-card-button:hover {
+            background: #059669;
+        }
+        QPushButton#latest-version-card-button:pressed {
+            background: #047857;
+        }
+        QProgressBar { 
+            background: #211733; 
+            border-radius: 4px; 
+            text-align: center;
+            color: transparent;
+        }
+        QProgressBar::chunk { 
+            background: #7c3aed; 
+            border-radius: 4px;
+        }
+        QLabel#footer {
+            border-top: 1px solid #4a2c7e;
+            color: #555;
+            padding: 10px;
+            font-size: 10px;
+        }
+        Notification {
+            background-color: #312249; 
+            border: 1px solid #5c3fa1;
+            border-radius: 12px;
+        }
+        Notification QLabel {
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        Notification[type="error"] {
+            background-color: #ef4444;
+            border: 1px solid #f87171;
+        }
+        Notification[type="success"] {
+            background-color: #10b981;
+            border: 1px solid #34d399;
+        }
+        QWidget#settingsOverlay {
+            background-color: rgba(13, 8, 22, 0.85);
+        }
+        QWidget#settingsModal {
+            background: #181126;
+            border-radius: 16px;
+            border: 1px solid #281d3d;
+        }
+        QWidget#settingsModalHeader {
+            border-bottom: 1px solid #281d3d;
+        }
+        QWidget#settingsModal QLabel{
+            color: #c9a8ff;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        QScrollBar:vertical {
+            border: none;
+            background: #140e20;
+            width: 8px;
+            margin: 0px;
+            border-radius: 4px;
+        }
+        QScrollBar::handle:vertical {
+            background: #362952;
+            min-height: 40px;
+            border-radius: 4px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background: #4c3085;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            border: none;
+            background: none;
+            height: 0px;
+        }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+            background: none;
+        }
     )");
 }
 QGraphicsDropShadowEffect* MainWindow::createGlow(const int &blur, const QColor &color) {
@@ -1046,14 +1028,14 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
     }
     return QMainWindow::eventFilter(obj, event);
 }
-void MainWindow::updateProgressBarTitle(const QString text){
+void MainWindow::updateProgressBarTitle(const QString text) {
     progressTitleText->setText(text);
 }
-void MainWindow::updateProgress(const qint64 precent){
+void MainWindow::updateProgress(const qint64 precent) {
     progressBar->setValue(precent);
     progressBarPrecent->setText(QString("%1%").arg(precent / 10.0f));
 }
-void MainWindow::showOrHideProgress(const bool show){
+void MainWindow::showOrHideProgress(const bool show) {
     if (show){
         widgetProgressSection->show();
     }
@@ -1061,8 +1043,13 @@ void MainWindow::showOrHideProgress(const bool show){
         widgetProgressSection->hide();
     }
 }
+void MainWindow::showNotification(const QString message, const QString type, const int duration) {
+    if(this->isHidden()) { return; }
+    Notification *n = new Notification(centralWidget, message, type, duration);
+}
+
 // --- SETTINGS & LOCALIZATION ---
-void MainWindow::readSettings(){
+void MainWindow::readSettings() {
     QSettings settings;
 
     searchQuery = settings.value("searchQuery").toString();
@@ -1095,7 +1082,7 @@ void MainWindow::changeRAM(const int val) {
     RAM = val;
     settings.setValue("RAM", val);
 }
-void MainWindow::changeUsername(const QString newUsername){
+void MainWindow::changeUsername(const QString newUsername) {
     QSettings settings;
 
     username = newUsername;
@@ -1132,7 +1119,8 @@ void MainWindow::updateStrings() {
     saveBtn->setText(tr("save_properties"));
     startBtn->setText(tr("start_server"));
     progressTitleText->setText(tr("install_disable"));
-    footer->setText(tr("launcher_version"));
+    btnCancel->setText(tr("cancel"));
+    footer->setText(tr("launcher_name") + " " + tr("launcher_version"));
     settingsHeaderTitle->setText(tr("settings"));
     MinecraftPathBtn->setText(tr("select_path"));
     FLSLPL->setText(tr("minecraft_path"));
@@ -1141,7 +1129,7 @@ void MainWindow::updateStrings() {
 
     
     for(QPushButton* b : filterBtns) {
-        QString tag_tr = "filter_" + b->objectName();
+        QString tag_tr = "filter_" + b->property("type").toString();
         b->setText(tr(tag_tr.toUtf8().constData()));
     } 
     for (QLabel* tl : typeLabelList) {
@@ -1160,7 +1148,11 @@ void MainWindow::updateStrings() {
         ltl->setText(tr(type.toUtf8().constData()));
     }
     for (QPushButton* lBtnD : latestBtnDownloadList) {
-        lBtnD->setText(tr("download"));
+        if (lBtnD->property("isInstalled").toBool()){
+            lBtnD->setText(tr("play"));
+        }else{
+            lBtnD->setText(tr("download"));
+        }
     }
 }
 void MainWindow::selectMinecraftDirectory(){
@@ -1191,7 +1183,7 @@ void MainWindow::selectMinecraftDirectory(){
 
 
 // --- VERSION MANAGEMENT ---
-void MainWindow::renderVersions(const QList<VersionData> versions, const QList<LatestVersionData> latestVersions){
+void MainWindow::renderVersions(const QList<VersionData> versions, const QList<LatestVersionData> latestVersions) {
     allVersions.clear();
     clearVersionsList();
     clearLatestVersionsList();
@@ -1287,51 +1279,18 @@ void MainWindow::addLatestVersionItem(const LatestVersionData &latestVersionData
     auto *item = new QWidget();
     item->setCursor(Qt::PointingHandCursor);
     item->setObjectName("latest-version-card");
-    item->setStyleSheet(R"(
-        QWidget#latest-version-card{
-            background: hsla(0, 0%, 100%, 0.1);
-            border-radius: 8px;
-            padding: 15;
-            border: 1 solid rgba(255, 255, 255, 0.2);
-        }
-        QWidget#latest-version-card:hover{
-            background: hsla(0, 0%, 100%, 0.2);
-        }
-    )");
     item->setProperty("isInstalled", latestVersionData.isInstalled);
     auto *layout = new QHBoxLayout(item);
     auto *infoLayout = new QVBoxLayout();
 
     auto *name_version = new QLabel(latestVersionData.name);
     name_version->setObjectName("latest-version-card-title");
-    name_version->setStyleSheet(R"(
-        QWidget#latest-version-card-title{
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 5px;
-            color: white;
-        }
-    )");
     auto *type_version = new QLabel(tr(latestVersionData.type.toUtf8().constData()));
     latestTypeLabelList.append(type_version);
     type_version->setProperty("type", latestVersionData.type.toLower());
     type_version->setObjectName("latest-version-card-type");
-    type_version->setStyleSheet(R"(
-        QWidget#latest-version-card-type{
-            font-size: 12px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            color: #d8b4fe;
-        }
-    )");
     auto *date_version = new QLabel(latestVersionData.date);
     date_version->setObjectName("latest-version-card-date");
-    date_version->setStyleSheet(R"(
-        QWidget#latest-version-card-date{
-            font-size: 12px;
-            color: #a78bfa;
-        }
-    )");
     auto *btn = new QPushButton(latestVersionData.isInstalled ? tr("play") : tr("download"));
     btn->setGraphicsEffect(createGlow(0, QColor(0, 0, 0, 80)));
     btn->setProperty("isInstalled", latestVersionData.isInstalled);
@@ -1349,20 +1308,6 @@ void MainWindow::addLatestVersionItem(const LatestVersionData &latestVersionData
     btn->installEventFilter(this);
     btn->setCursor(Qt::PointingHandCursor);
     btn->setObjectName("latest-version-card-button");
-    btn->setStyleSheet(R"(
-        QPushButton#latest-version-card-button {
-            background: #10b981;
-            font-size: 14px;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 800;
-        }
-        QPushButton#latest-version-card-button:hover {
-            background: #059669;
-        }
-    )");
     infoLayout->addWidget(name_version);
     infoLayout->addWidget(type_version);
     infoLayout->addWidget(date_version);
@@ -1410,12 +1355,13 @@ void MainWindow::clearLatestVersionsList() {
     }
 }
 
+
 // --- FILTERING & SEARCH ---
 void MainWindow::clickFilterBtn() {
     auto *btn = qobject_cast<QPushButton*>(sender());
     if (!btn) return;
     filters.clear();
-    QString name = btn->objectName();
+    QString name = btn->property("type").toString();
     if (name == "all") {
         bool ischeckedBtn = btn->isChecked();
         for (QPushButton *b : filterBtns) {
@@ -1434,12 +1380,13 @@ void MainWindow::clickFilterBtn() {
         QPushButton *allBtn = nullptr;
 
         for (QPushButton *b : filterBtns) {
-            if (b->objectName() == "all") {
+            QString btnName = b->property("type").toString();
+            if (btnName == "all") {
                 allBtn = b;
             } else {
                 totalBtns++;
                 if (b->isChecked()) {
-                    filters.append(b->objectName());
+                    filters.append(btnName);
                     checkedCount++;
                 }
             }
@@ -1569,7 +1516,7 @@ void MainWindow::applyFilter(const QStringList &allowedTypes, const QString &sea
 
 
 // --- INSTALLATION & DOWNLOADS ---
-void MainWindow::clickDownloadMinecraft(QWidget *item){
+void MainWindow::clickDownloadMinecraft(QWidget *item) {
     auto *btn = qobject_cast<QPushButton*>(sender());
     if(!btn) return;
 
@@ -1577,22 +1524,28 @@ void MainWindow::clickDownloadMinecraft(QWidget *item){
     const QString uuid = QUuid::createUuid().toString();
 
     auto connection = std::make_shared<QMetaObject::Connection>();
-    *connection = connect(DOWNLOAD_MANAGER, &DownloadManager::finished, this, [this, connection, btn, item, uuid](bool success, const QString id) {
+    *connection = connect(DOWNLOAD_MANAGER, &DownloadManager::finished, this, [this, connection, btn, item, uuid, name](const bool success, const QString id) {
         if(id == uuid){
             if(success){
-                updateProgress(0);
                 btn->setText(tr("play"));
                 btn->setProperty("isInstalled", true);
                 item->setProperty("isInstalled", true);
-                updateProgressBarTitle(tr("install_disable"));
+                showNotification(QCoreApplication::translate("Success", "install_success_version").arg(name), "Success");
                 applyFilter();
             }
-            QObject::disconnect(*connection); 
+            disconnect(*connection); 
         }
     });
+    btnCancel->setProperty("id", uuid);
     emit downloadMinecraft((tr("install_active") + " " + name), uuid, name, btn->property("hash").toString(), btn->property("url").toString());
 }
-void MainWindow::clickPlayMinecraft(){
+void MainWindow::clickBtnCancel() {
+    auto *btn = qobject_cast<QPushButton*>(sender());
+    if(!btn) return;
+
+    DOWNLOAD_MANAGER->cancelDownload(btn->property("id").toString());
+}
+void MainWindow::clickPlayMinecraft() {
     auto *btn = qobject_cast<QPushButton*>(sender());
 
     if(!btn) return;
@@ -1609,8 +1562,8 @@ void MainWindow::clickPlayMinecraft(){
                         "00000000000000000000000000000000",
                         "mojang",
                         btn->property("type").toString(),
-                        "LunusikLauncher",
-                        "v0.3.3 beta",
+                        tr("launcher_name"),
+                        tr("launcher_version"),
                         "200",
                         "200",
                     
@@ -1626,4 +1579,7 @@ void MainWindow::clickPlayMinecraft(){
     connect(thread, &QThread::finished, thread, &QObject::deleteLater);
 
     thread->start();
+}
+void MainWindow::clickUpdateVersions() {
+    emit loadVersions(true);
 }

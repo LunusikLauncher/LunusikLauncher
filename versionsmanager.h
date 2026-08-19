@@ -3,8 +3,9 @@
 
 #include "libs.h"
 #include "downloadmanager.h"
+#include "manager.h"
 
-class VersionsManager : public QObject {
+class VersionsManager : public Manager {
     Q_OBJECT
 public:
     explicit VersionsManager(DownloadManager *DOWNLOAD_MANAGER, const QString &minecraftDirectory = QString(), QObject *parent = nullptr);

@@ -15,15 +15,14 @@ public slots:
     void setMinecraftDirectory(const QString minecraftDirectory);
     void downloadMinecraft(const QString text, const QString id, const QString name, const QString hashManifest, const QString url);
     void downloadFiles(const QList<DownloadTask> files, const QString text, const QString id);
-    void cancelDownload();
+    void cancelDownload(const QString &id);
     void updateVersions();
 signals:
     void progressUpdated(qint64 percent);
     void statusTextChanged(const QString text);
     void showOrHideProgress(const bool show);
-    void finished(bool success, const QString id);
+    void finished(const bool success, const QString id);
     void finishedExtractNatives();
-    void error(QString message);
 
     void extactNativesStart();
     bool updatedVersions();
@@ -32,20 +31,22 @@ private:
     // --- INSTALLATION & DOWNLOADS ---
     QNetworkAccessManager *manager = nullptr;
     QString minecraftDirectory;
-    bool isStopDownload = false;
+    bool isBreakDownload = false;
     qint64 filesDownloadedSize;
     qint64 filesTotalSize;
 
-    QList<QNetworkReply*> activeReplies;
+    QHash<QString, QList<QNetworkReply*>> activeReplies;
     QEventLoop* currentLoop = nullptr;
     SystemConfig system;
-    void extractFile(const QString &zipPath, const QString &outputDir, const QStringList &excludes);
+    bool extractFile(const QString &zipPath, const QString &outputDir, const QStringList &excludes);
     bool decompressFile(const QString &inputPath, const QString &outputPath);
+    bool setExecutable(const QString &filePath);
     bool installOneFile(const QString &url, const QString &path, const QString &hashFile);
     bool installOneFile(const QString &url, const QString &path, QJsonObject *outJsonData = nullptr, const QString &hashFile = nullptr);
     void installMoreFiles(const DownloadTask dt, const QString id = nullptr);
-    void setExecutable(const QString &filePath);
     void updateProgressBar(const QString &id);
+    void notificationAndCancel(const QString id, const QString message, const QString type, const int duration = BASE_NOTIFICATION_DURATION);
+    void finish(const bool success, const QString id);
     QList<DownloadTask> downloadJava(const QString name);
 };
 #endif

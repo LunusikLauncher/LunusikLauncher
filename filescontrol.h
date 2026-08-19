@@ -2,9 +2,9 @@
 #define FILESCONTROL_H
 
 #include "libs.h"
+#include "manager.h"
 
-
-class FilesControl : public QObject {
+class FilesControl : public Manager {
     Q_OBJECT
 public:
     explicit FilesControl(QObject *parent = nullptr);

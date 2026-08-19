@@ -169,6 +169,94 @@ private:
 };
 
 
+class Notification : public QWidget {
+    Q_OBJECT
+private:
+    int duration;
+
+    QLayout *messageBoxLayout;
+    QLabel *typeMessage;
+    QLabel *textMessage;
+
+    QGraphicsOpacityEffect *opacityEffect;
+    int speed;
+
+    inline static Notification *currentNotification = nullptr;
+public:
+    explicit Notification(QWidget *parent, const QString text, const QString type, const int duration, const int speed = 300) 
+    : QWidget(parent), duration(duration), speed(speed){
+        if (currentNotification) {
+            currentNotification->hide();
+            currentNotification->deleteLater();
+        }
+        currentNotification = this;
+
+        setAttribute(Qt::WA_StyledBackground, true);
+
+        messageBoxLayout = new QVBoxLayout(this);
+
+        typeMessage = new QLabel(type.left(1).toUpper() + type.mid(1).toLower(), this);
+        textMessage = new QLabel(text, this);
+
+        setProperty("type", type.toLower());
+        messageBoxLayout->addWidget(typeMessage);
+        messageBoxLayout->addWidget(textMessage);
+        messageBoxLayout->setContentsMargins(10, 5, 10, 5);
+
+        opacityEffect = new QGraphicsOpacityEffect(this);
+        opacityEffect->setOpacity(0.0);
+        setGraphicsEffect(opacityEffect);
+
+        adjustSize();
+        startSpawnAnimation();
+    }
+
+    void startSpawnAnimation() {
+        QPropertyAnimation *animOpacity = new QPropertyAnimation(opacityEffect, "opacity");
+        animOpacity->setDuration(speed);
+        animOpacity->setStartValue(0.0);
+        animOpacity->setEndValue(1.0);
+        animOpacity->start(QAbstractAnimation::DeleteWhenStopped);
+
+        QPropertyAnimation *animPos = new QPropertyAnimation(this, "pos");
+        animPos->setDuration(speed);
+        
+        int startX = (parentWidget()->width() - width()) / 2; 
+        animPos->setStartValue(QPoint(startX, - height()));
+        animPos->setEndValue(QPoint(startX, 20));
+
+        connect(animPos, &QAbstractAnimation::finished, this, [this]() {
+            QTimer::singleShot(duration, this, &Notification::startFadeOut);
+        });
+        animPos->start(QAbstractAnimation::DeleteWhenStopped);
+        show();
+    }
+
+    void startFadeOut() {
+        QPropertyAnimation *animOpacity = new QPropertyAnimation(opacityEffect, "opacity");
+        animOpacity->setDuration(speed);
+        animOpacity->setStartValue(1.0);
+        animOpacity->setEndValue(0.0);
+
+        QPropertyAnimation *animPos = new QPropertyAnimation(this, "pos");
+        animPos->setDuration(speed);
+        animPos->setStartValue(pos());
+        animPos->setEndValue(QPoint(x(), -height()));
+
+        connect(animOpacity, &QAbstractAnimation::finished, this, [this]() {
+            if (currentNotification == this) {
+                currentNotification = nullptr;
+            }
+            deleteLater();
+        });
+
+        animOpacity->start(QAbstractAnimation::DeleteWhenStopped);
+        animPos->start(QAbstractAnimation::DeleteWhenStopped);
+    }
+    
+
+};
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
@@ -180,6 +268,8 @@ public slots:
     void updateProgress(const qint64 precent);
     void showOrHideProgress(const bool show);
     void renderVersions(const QList<VersionData> versions, const QList<LatestVersionData> latestVersions);
+
+    void showNotification(const QString message, const QString type, const int duration = BASE_NOTIFICATION_DURATION);
     
 signals:
     void loadVersions(const bool isUpdateRequired = false);
@@ -239,8 +329,10 @@ private:
     
     // --- INSTALLATION & DOWNLOADS ---
     void clickDownloadMinecraft(QWidget *item);
+    void clickBtnCancel();
     void clickPlayMinecraft();
-    
+    void clickUpdateVersions();
+    QWidget *centralWidget;
     QList<QWidget*> allVersions;
     QWidget *SettingsOverlay;
     QJsonObject strings;
@@ -260,6 +352,7 @@ private:
     QPushButton *levelPathBtn;
     QPushButton *saveBtn;
     QPushButton *startBtn;
+    QPushButton *btnCancel;
     QWidget *widgetProgressSection;
     QLabel *progressTitleText;
     QProgressBar *progressBar;

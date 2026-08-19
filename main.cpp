@@ -13,6 +13,11 @@ int main(int argc, char *argv[]) {
     splash->show();
     splash->showMessage("Launching...", Qt::AlignBottom | Qt::AlignHCenter, Qt::white);
     app.processEvents();
+
+    int fontId = QFontDatabase::addApplicationFont(":/fonts/Minecraft.otf");
+    if (fontId != -1) {
+        QString fontName = QFontDatabase::applicationFontFamilies(fontId).at(0);
+    }
     MainWindow w(splash);
 
     w.setWindowIcon(icon); 

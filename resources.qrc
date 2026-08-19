@@ -20,14 +20,18 @@
 		<file>icons/favorite_hover.svg</file>
 		<file>icons/favorite_checked.svg</file>
 		<file>icons/LLL.ico</file>
+
+		<file>fonts/Minecraft.otf</file>
     </qresource>
 
     <qresource prefix="/i18n">
+		<file>translations/de-de.qm</file>
 		<file>translations/en-en.qm</file>
 		<file>translations/es-es.qm</file>
+		<file>translations/fr-fr.qm</file>
 		<file>translations/it-it.qm</file>
 		<file>translations/ja-jp.qm</file>
 		<file>translations/ru-ru.qm</file>
-		<file>translations/zn-ch.qm</file>
+		<file>translations/zh-cn.qm</file>
     </qresource>
 </RCC>

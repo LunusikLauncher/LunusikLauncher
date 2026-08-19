@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="es_ES">
+<TS version="2.1" language="fr_FR">
 <context>
     <name>MainWindow</name>
     <message>
         <source>launcher_title</source>
-        <translation>[ LunusikLauncher ] - Lyonya aprueba</translation>
+        <translation>[ LunusikLauncher ] - Lenya approves</translation>
     </message>
     <message>
         <source>launcher_name</source>
@@ -17,31 +17,31 @@
     </message>
     <message>
         <source>current_language</source>
-        <translation>Español</translation>
+        <translation>Français</translation>
     </message>
     <message>
         <source>select_path</source>
-        <translation>Seleccionar Ruta</translation>
+        <translation>Sélectionner un chemin</translation>
     </message>
     <message>
         <source>save_properties</source>
-        <translation>Guardar Ajustes del Servidor</translation>
+        <translation>Enregistrer les propriétés du serveur</translation>
     </message>
     <message>
         <source>start_server</source>
-        <translation>Iniciar Servidor</translation>
+        <translation>Démarrer le serveur</translation>
     </message>
     <message>
         <source>filters</source>
-        <translation>Filtros</translation>
+        <translation>Filtres</translation>
     </message>
     <message>
         <source>filter_all</source>
-        <translation>Todos</translation>
+        <translation>Tous</translation>
     </message>
     <message>
         <source>filter_release</source>
-        <translation>Versiones Oficiales</translation>
+        <translation>Versions stables</translation>
     </message>
     <message>
         <source>filter_snapshot</source>
@@ -53,23 +53,23 @@
     </message>
     <message>
         <source>filter_old_beta</source>
-        <translation>Betas</translation>
+        <translation>Bêtas</translation>
     </message>
     <message>
         <source>create_server</source>
-        <translation>Crear Servidor</translation>
+        <translation>Créer un serveur</translation>
     </message>
     <message>
         <source>username</source>
-        <translation>Tu Nickname</translation>
+        <translation>Votre pseudo</translation>
     </message>
     <message>
         <source>versions</source>
-        <translation>Versiones de Minecraft</translation>
+        <translation>Versions de Minecraft</translation>
     </message>
     <message>
         <source>release</source>
-        <translation>versión oficial</translation>
+        <translation>version stable</translation>
     </message>
     <message>
         <source>snapshot</source>
@@ -77,71 +77,71 @@
     </message>
     <message>
         <source>old_alpha</source>
-        <translation>alpha antigua</translation>
+        <translation>ancienne alpha</translation>
     </message>
     <message>
         <source>old_beta</source>
-        <translation>beta antigua</translation>
+        <translation>ancienne bêta</translation>
     </message>
     <message>
         <source>download</source>
-        <translation>Descargar</translation>
+        <translation>Télécharger</translation>
     </message>
     <message>
         <source>play</source>
-        <translation>Jugar</translation>
+        <translation>Jouer</translation>
     </message>
     <message>
         <source>search_version</source>
-        <translation>Buscar versión...</translation>
+        <translation>Rechercher une version...</translation>
     </message>
     <message>
         <source>server_version_prefix</source>
-        <translation>Versión del Servidor</translation>
+        <translation>Version du serveur</translation>
     </message>
     <message>
         <source>none</source>
-        <translation>Ninguna</translation>
+        <translation>Aucune</translation>
     </message>
     <message>
         <source>install_disable</source>
-        <translation>Instalación No Disponible</translation>
+        <translation>L'installation ne fonctionne pas</translation>
     </message>
     <message>
         <source>install_active</source>
-        <translation>Instalando Minecraft</translation>
+        <translation>Installation de Minecraft</translation>
     </message>
     <message>
         <source>install_stopped</source>
-        <translation>Instalación Detenida</translation>
+        <translation>Installation arrêtée</translation>
     </message>
     <message>
         <source>check_files</source>
-        <translation>Comprobando Archivos de Minecraft</translation>
+        <translation>Vérification des fichiers de Minecraft</translation>
     </message>
     <message>
         <source>cancel</source>
-        <translation>Cancelar</translation>
+        <translation>Annuler</translation>
     </message>
     <message>
         <source>settings</source>
-        <translation>Ajustes del Launcher</translation>
+        <translation>Paramètres du lanceur</translation>
     </message>
     <message>
         <source>minecraft_path</source>
-        <translation>Carpeta de Minecraft</translation>
+        <translation>Dossier Minecraft</translation>
     </message>
     <message>
         <source>select_minecraftDir</source>
-        <translation>Selecciona la Carpeta para Minecraft</translation>
+        <translation>Sélectionner le dossier Minecraft</translation>
     </message>
     <message>
         <source>language</source>
-        <translation>Idioma</translation>
+        <translation>Langue</translation>
     </message>
     <message>
         <source>RAM</source>
-        <translation>RAM Asignada al Cliente (MB)</translation>
+        <translation>Mémoire du client (Mo)</translation>
     </message>
 </context>
 
@@ -149,67 +149,67 @@
     <name>Error</name>
     <message>
         <source>invalid_version_data</source>
-        <translation>Datos de versión no válidos recibidos.</translation>
+        <translation>Données de version invalides reçues.</translation>
     </message>
     <message>
         <source>invalid_java_data</source>
-        <translation>Datos de Java no válidos recibidos.</translation>
+        <translation>Données Java invalides reçues.</translation>
     </message>
     <message>
         <source>java_manifest</source>
-        <translation>No se pudo cargar el archivo de manifiesto de Java.</translation>
+        <translation>Échec du chargement du fichier manifeste Java.</translation>
     </message>
     <message>
         <source>java_versions</source>
-        <translation>No se pudo cargar la lista de versiones de Java.</translation>
+        <translation>Échec du chargement de la liste des versions Java.</translation>
     </message>
     <message>
         <source>assets_manifest</source>
-        <translation>No se pudieron cargar los recursos del juego para Minecraft %1.</translation>
+        <translation>Échec du chargement des ressources du jeu pour Minecraft %1.</translation>
     </message>
     <message>
         <source>version_manifest</source>
-        <translation>No se pudo cargar la configuración para Minecraft %1.</translation>
+        <translation>Échec du chargement de la configuration pour Minecraft %1.</translation>
     </message>
     <message>
         <source>cant_create_dir</source>
-        <translation>No se pudo crear el directorio del juego.</translation>
+        <translation>Échec de la création du répertoire de jeu.</translation>
     </message>
     <message>
         <source>cant_write_file</source>
-        <translation>No se pudieron escribir datos en el disco.</translation>
+        <translation>Échec de l'écriture des données sur le disque.</translation>
     </message>
     <message>
         <source>cant_read_file</source>
-        <translation>No se pudo leer el archivo descargado desde el disco.</translation>
+        <translation>Échec de la lecture du fichier téléchargé depuis le disque.</translation>
     </message>
     <message>
         <source>cant_copy_file</source>
-        <translation>No se pudieron copiar los archivos del juego.</translation>
+        <translation>Échec de la copie des fichiers du jeu.</translation>
     </message>
     <message>
         <source>cant_open_jar</source>
-        <translation>No se pudo abrir el archivo del juego.</translation>
+        <translation>Échec de l'ouverture de l'archive du jeu.</translation>
     </message>
     <message>
         <source>lzma_decode_error</source>
-        <translation>No se pudieron descomprimir los componentes del juego. El archivo podría estar dañado.</translation>
+        <translation>Échec de la décompression des composants du jeu. Le fichier est peut-être corrompu.</translation>
     </message>
     <message>
         <source>empty_server_response</source>
-        <translation>Se recibieron datos vacíos del servidor. Inténtelo de nuevo más tarde.</translation>
+        <translation>Données vides reçues du serveur. Veuillez réessayer plus tard.</translation>
     </message>
     <message>
         <source>exec_file_missing</source>
-        <translation>Falta un componente requerido del juego. Reinstale la versión.</translation>
+        <translation>Un composant de jeu requis est manquant. Veuillez réinstaller la version.</translation>
     </message>
     <message>
         <source>cant_set_executable</source>
-        <translation>No se pudieron establecer los permisos del archivo. Verifique los derechos de acceso del lanzador.</translation>
+        <translation>Échec de la définition des permissions du fichier. Vérifiez les droits d'accès du lanceur.</translation>
     </message>
     <message>
         <source>cant_save_cache</source>
-        <translation>No se pudo guardar la caché de la lista de versiones local. Verifique los permisos de escritura en disco.</translation>
+        <translation>Échec de l'enregistrement du cache de la liste des versions locale. Vérifiez les autorisations d'écriture sur le disque.</translation>
     </message>
 </context>
 
@@ -217,11 +217,11 @@
     <name>Success</name>
     <message>
         <source>install_success_version</source>
-        <translation>¡Minecraft %1 instalado correctamente!</translation>
+        <translation>Minecraft %1 installé avec succès !</translation>
     </message>
     <message>
         <source>update_success_versions</source>
-        <translation>¡Lista de versiones actualizada correctamente!</translation>
+        <translation>Liste des versions mise à jour avec succès !</translation>
     </message>
 </context>
 </TS>

@@ -31,7 +31,8 @@ void MinecraftManager::startMinecraft(){
     QFile vm(data.gameDir + "/" + data.version + ".json");
     
     if (!vm.open(QIODevice::ReadOnly)){
-        qWarning() << "Cant open manifest version";
+        emit showNotification(QCoreApplication::translate("Error", "cant_read_file"), "Error");
+        qWarning() << "Cant open version manifest";
         return;
     }
     QJsonObject versionManifest = QJsonDocument::fromJson(vm.readAll()).object();
@@ -39,7 +40,8 @@ void MinecraftManager::startMinecraft(){
 
     QFile am(data.minecraftDir + "/assets/indexes/" + data.version + ".json");
     if (!am.open(QIODevice::ReadOnly)){
-        qWarning() << "Cant open manifest version";
+        emit showNotification(QCoreApplication::translate("Error", "cant_read_file"), "Error");
+        qWarning() << "Cant open assets manifest";
         return;
     }
     QJsonObject assetsManifest = QJsonDocument::fromJson(am.readAll()).object();
@@ -62,12 +64,14 @@ void MinecraftManager::startMinecraft(){
             QFileInfo fileInfo(path);
 
             if(!dir.mkpath(fileInfo.absolutePath())){
+                emit showNotification(QCoreApplication::translate("Error", "cant_create_dir"), "Error");
                 qWarning() << "Error: cant create folders: " << fileInfo.absolutePath();
                 continue;
             }
 
 
             if (!QFile::copy(data.minecraftDir + "/assets/objects/" + firstTwo + "/" + hash, path)) {
+                emit showNotification(QCoreApplication::translate("Error", "cant_copy_file"), "Error");
                 qWarning() << "Cant copy file";
             }
         }
@@ -174,8 +178,6 @@ void MinecraftManager::startMinecraft(){
 
                 process->setProcessEnvironment(env);
                 process->setWorkingDirectory(data.minecraftDir);
-
-                qDebug() << command;
                 
                 process->start(QString("%1/Java/%2/bin/" + javaExe).arg(data.minecraftDir, versionManifest["javaVersion"].toObject()["component"].toString()), command);
                 
@@ -190,7 +192,7 @@ void MinecraftManager::startMinecraft(){
 
                 emit exit();
             }
-            QObject::disconnect(*connection); 
+            disconnect(*connection); 
         }
     });
 
