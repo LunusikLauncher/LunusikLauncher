@@ -47,7 +47,7 @@ This project uses the following third-party components:
 - **MinGW-w64 runtime** – licensed under the MinGW-w64 runtime license (BSD-like).
 - **LZMA SDK / liblzma** – public domain.
   
-The full texts of these licenses are available in the [COPYRIGHT](COPYRIGHT) file.
+The full texts of these licenses are available in the [COPYRING](COPYRING) file.
 
 ---
 ###### NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.
