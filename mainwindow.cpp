@@ -58,20 +58,11 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     auto *header = new QHBoxLayout(headerWidget);
     header->setContentsMargins(0, 20, 10, 20);
 
-    auto *iconBox = new QWidget();
+    auto *iconBox = new QLabel();
     iconBox->setFixedSize(40, 40);
-    iconBox->setObjectName("logoIconContainer");
+    iconBox->setPixmap(QIcon(":/icons/LLL.ico").pixmap(scalingIcon(40), scalingIcon(40)));
+    iconBox->setAlignment(Qt::AlignCenter);
     iconBox->setGraphicsEffect(createGlow(15, QColor(138, 43, 226, 200)));
-
-
-    auto *iconLabel = new QLabel(iconBox);
-    iconLabel->setPixmap(QIcon(":/icons/logo.svg").pixmap(scalingIcon(24), scalingIcon(24)));
-    iconLabel->setAlignment(Qt::AlignCenter);
-
-
-    auto *iconLayout = new QVBoxLayout(iconBox);
-    iconLayout->addWidget(iconLabel, 0, Qt::AlignCenter);
-    iconLayout->setContentsMargins(0, 0, 0, 0);
 
 
     logoText = new GradientLabel("", QColor("#b967ff"), QColor("#8a2be2"));
