@@ -13,14 +13,17 @@
 This launcher was created because I was bored.
 
 For now, it only implements the most basic features: launching and installing Minecraft, sorting versions, adding them to favorites, but in the future, the creation of your own local server will also be implemented.
-### How to install
-You can download the launcher directly from our **[official website](https://LunusikLauncher.github.io/)** or from the **[GitHub Releases](https://github.com/LunusikLauncher/LunusikLauncher/releases)** page.
-### How to compile
-Currently, the launcher only works on Windows, but support for other platforms is coming soon!
 
-To compile this launcher, run the script:
-```bash
-builds/compile_windows.bat
+## How to install
+You can download the launcher directly from our **[official website](https://LunusikLauncher.github.io/)** or from the **[GitHub Releases](https://github.com/LunusikLauncher/LunusikLauncher/releases)** page.
+
+## How to compile
+Currently, the launcher only works on Windows and Linux, but support for other platforms is coming soon!
+
+### Windows
+To compile this launcher on Windows, run the script:
+```cmd
+./builds/compile_windows.bat
 ```
 
 After successful compilation, run the ready application:
@@ -28,19 +31,30 @@ After successful compilation, run the ready application:
 builds/build-windows/build/LunusikLauncher.exe
 ```
 
+### Linux
+To compile this launcher on Linux, run the script:
+```sh
+chmod +x ./builds/compile-linux.sh
+./builds/compile-linux.sh
+```
+After successful compilation, run the ready application:
+```text
+builds/build-linux/build/bin/LunusikLauncher
+```
+
 That's it, you're **BOOOSS**!
 
 
-### Troubleshooting
+## Troubleshooting
 
 If you see an error after running `compile_windows.bat` for the first time, don't worry. Just try again. 
 
 If you still encounter an error, please contact support: **[lunusiklauncher@gmail.com](mailto:lunusiklauncher@gmail.com)**
 
-### License
+## License
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-### Third-party licenses
+## Third-party licenses
 This project uses the following third-party components:
 
 - **Qt** – licensed under the GNU Lesser General Public License v3.0 (LGPLv3).
