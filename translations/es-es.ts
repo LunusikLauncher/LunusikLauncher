@@ -211,6 +211,10 @@
         <source>cant_save_cache</source>
         <translation>No se pudo guardar la caché de la lista de versiones local. Verifique los permisos de escritura en disco.</translation>
     </message>
+    <message>
+        <source>unknown_system</source>
+        <translation>Sistema desconocido</translation>
+    </message>
 </context>
 
 <context>

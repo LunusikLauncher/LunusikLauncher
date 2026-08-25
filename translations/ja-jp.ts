@@ -211,6 +211,10 @@
         <source>cant_save_cache</source>
         <translation>ローカルバージョンリストのキャッシュを保存できませんでした。ディスクの書き込み権限を確認してください。</translation>
     </message>
+    <message>
+        <source>unknown_system</source>
+        <translation>不明なシステム</translation>
+    </message>
 </context>
 
 <context>

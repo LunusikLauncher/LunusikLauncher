@@ -211,6 +211,10 @@
         <source>cant_save_cache</source>
         <translation>无法保存本地版本列表缓存。请检查磁盘写入权限。</translation>
     </message>
+    <message>
+        <source>unknown_system</source>
+        <translation>未知系统</translation>
+    </message>
 </context>
 
 <context>

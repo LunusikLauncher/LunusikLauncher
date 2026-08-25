@@ -211,6 +211,10 @@
         <source>cant_save_cache</source>
         <translation>Impossibile salvare la cache dell'elenco versioni locale. Controlla i permessi di scrittura su disco.</translation>
     </message>
+    <message>
+        <source>unknown_system</source>
+        <translation>Sistema sconosciuto</translation>
+    </message>
 </context>
 
 <context>

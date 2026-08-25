@@ -3,6 +3,16 @@
 DownloadManager::DownloadManager(const QString &minecraftDirectory, QObject *parent) 
 : FilesControl(parent) {
     this->minecraftDirectory = minecraftDirectory;
+
+    QString name;
+    #ifdef Q_OS_WIN
+        name = "windows";
+    #elif defined(Q_OS_LINUX)
+        name = "linux";
+    #elif defined(Q_OS_MAC)
+        name = "macos";
+    #endif
+
     QString arch;
     #if defined(Q_PROCESSOR_ARM_64)
         arch = "arm64";
@@ -11,7 +21,9 @@ DownloadManager::DownloadManager(const QString &minecraftDirectory, QObject *par
     #elif defined(Q_PROCESSOR_X86_32)
         arch = "32";
     #endif
-    system = {QSysInfo::productType(), QSysInfo::kernelVersion(), arch};
+    system = {.name   = name,
+                .version = QSysInfo::kernelVersion(),
+                .arch    = arch};
 }
 void DownloadManager::setMinecraftDirectory(const QString minecraftDirectory){
     this->minecraftDirectory = minecraftDirectory;
@@ -179,7 +191,6 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
     downloadTasks << downloadJava(versionManifest["javaVersion"].toObject()["component"].toString());
 
     downloadFiles(downloadTasks, text, id);
-    
 }
 
 QList<DownloadTask> DownloadManager::downloadJava(const QString name){
@@ -214,6 +225,9 @@ QList<DownloadTask> DownloadManager::downloadJava(const QString name){
     }
     else{
         platformKey = "gamecore";
+        emit showNotification(QCoreApplication::translate("Error", "unknown_system"), "Error");
+        qWarning() << "Error: unknown system";
+        return downloadTasks;
     }
 
     const QJsonObject dataJavaManifest = manifest[platformKey].toObject()[name].toArray()[0].toObject()["manifest"].toObject();
@@ -582,7 +596,7 @@ void DownloadManager::updateVersions() {
         if (reply->error() != QNetworkReply::NoError) {
             emit showNotification(reply->errorString(), "Error");
             qWarning() << "Loading error:" << reply->errorString();
-            if (!emit updatedVersions()){emit renderVersions({}, {});}
+            if (!emit updatedVersions()) {emit renderVersions({}, {});}
             return;
         }
 
@@ -592,6 +606,7 @@ void DownloadManager::updateVersions() {
         if (json_doc.isNull()) {
             emit showNotification(QCoreApplication::translate("Error", "bad_json_data"), "Error");
             qWarning() << "JSON is null";
+            if (!emit updatedVersions()) {emit renderVersions({}, {});}
             return;
         }
 
@@ -599,6 +614,7 @@ void DownloadManager::updateVersions() {
         if (!file_versions.open(QIODevice::WriteOnly)) {
             emit showNotification(QCoreApplication::translate("Error", "cant_save_cache"), "Error");
             qWarning() << "Cant open versions file";
+            if (!emit updatedVersions()) {emit renderVersions({}, {});}
             return;
         }
         
@@ -643,6 +659,7 @@ void DownloadManager::updateVersions() {
         doc["latest_versions"] = QJsonObject::fromVariantMap(latest_versions);
         file_versions.write(QJsonDocument(doc).toJson(QJsonDocument::Indented));
         file_versions.close();
+
         emit updatedVersions();
     });
 }

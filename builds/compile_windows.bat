@@ -13,7 +13,7 @@ echo %BLUE%=== Generating files and Creating translations ===%RESET%
 if not exist "build-windows" mkdir "build-windows" > nul
 cd "build-windows"
 cmake ../.. -G "MinGW Makefiles" > nul
-call ./../../translations/compileLanguages.bat > nul
+call ./../../translations/compile_languages.bat > nul
 
 
 echo %BLUE%=== Project Compilation ===%RESET%

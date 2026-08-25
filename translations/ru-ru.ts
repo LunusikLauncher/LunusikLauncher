@@ -211,6 +211,10 @@
         <source>cant_save_cache</source>
         <translation>Не удалось сохранить кэш локального списка версий. Проверьте права на запись на диск.</translation>
     </message>
+    <message>
+        <source>unknown_system</source>
+        <translation>Неизвестная система</translation>
+    </message>
 </context>
 
 <context>

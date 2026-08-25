@@ -6,9 +6,15 @@ FilesControl(parent),
 DOWNLOAD_MANAGER(DOWNLOAD_MANAGER) {
     this->data = data;
 
+    QString name;
     #ifdef Q_OS_WIN
+        name = "windows";
         javaExe = "java.exe";
-    #else
+    #elif defined(Q_OS_LINUX)
+        name = "linux";
+        javaExe = "java";
+    #elif defined(Q_OS_MAC)
+        name = "macos";
         javaExe = "java";
     #endif
 
@@ -20,7 +26,11 @@ DOWNLOAD_MANAGER(DOWNLOAD_MANAGER) {
     #elif defined(Q_PROCESSOR_X86_32)
         arch = "32";
     #endif
-    system = {QSysInfo::productType(), QSysInfo::kernelVersion(), arch};
+
+
+    system = {.name   = name,
+                .version = QSysInfo::kernelVersion(),
+                .arch    = arch};
     connect(this, &MinecraftManager::checkFiles, DOWNLOAD_MANAGER, &DownloadManager::downloadMinecraft);
     connect(this, &MinecraftManager::hideWindow, mainwindow, &QWidget::hide);
 }
@@ -178,8 +188,10 @@ void MinecraftManager::startMinecraft(){
 
                 process->setProcessEnvironment(env);
                 process->setWorkingDirectory(data.minecraftDir);
-                
-                process->start(QString("%1/Java/%2/bin/" + javaExe).arg(data.minecraftDir, versionManifest["javaVersion"].toObject()["component"].toString()), command);
+
+                const QString javaPath = QString("%1/Java/%2/bin/" + javaExe).arg(data.minecraftDir, versionManifest["javaVersion"].toObject()["component"].toString());
+                QFile::setPermissions(javaPath, QFileDevice::Permission(0x755));
+                process->start(javaPath, command);
                 
                 if (process->waitForStarted()) {
                     process->waitForFinished(-1); 

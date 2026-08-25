@@ -407,7 +407,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     btnCancel->setProperty("id", "0");
     btnCancel->installEventFilter(this);
     btnCancel->setCursor(Qt::PointingHandCursor);
-    connect(btnCancel, QPushButton::clicked, this, &MainWindow::clickBtnCancel);
+    connect(btnCancel, &QPushButton::clicked, this, &MainWindow::clickBtnCancel);
     progressCancel->addWidget(btnCancel);
     progressCancel->addStretch();
 
@@ -576,23 +576,23 @@ void MainWindow::showInfo() {
 int MainWindow::getTotalRAM() {
     quint64 totalMemory = 0;
 
-#if defined(Q_OS_WIN)
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-    if (GlobalMemoryStatusEx(&memInfo)) {
-        totalMemory = memInfo.ullTotalPhys;
-    }
-#elif defined(Q_OS_LINUX)
-    long pages = sysconf(_SC_PHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
-    if (pages > 0 && page_size > 0) {
-        totalMemory = (quint64)pages * (quint64)page_size;
-    }
-#elif defined(Q_OS_MAC)
-    int mib[2] = { CTL_HW, HW_MEMSIZE };
-    size_t length = sizeof(totalMemory);
-    sysctl(mib, 2, &totalMemory, &length, NULL, 0);
-#endif
+    #if defined(Q_OS_WIN)
+        MEMORYSTATUSEX memInfo;
+        memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+        if (GlobalMemoryStatusEx(&memInfo)) {
+            totalMemory = memInfo.ullTotalPhys;
+        }
+    #elif defined(Q_OS_LINUX)
+        long pages = sysconf(_SC_PHYS_PAGES);
+        long page_size = sysconf(_SC_PAGE_SIZE);
+        if (pages > 0 && page_size > 0) {
+            totalMemory = (quint64)pages * (quint64)page_size;
+        }
+    #elif defined(Q_OS_MAC)
+        int mib[2] = { CTL_HW, HW_MEMSIZE };
+        size_t length = sizeof(totalMemory);
+        sysctl(mib, 2, &totalMemory, &length, NULL, 0);
+    #endif
 
     if (totalMemory > 0) {
         return static_cast<int>(totalMemory / (1024 * 1024));
@@ -600,7 +600,19 @@ int MainWindow::getTotalRAM() {
     
     return 4096;
 }
+QString MainWindow::getBaseMinecraftPath() {
+    QString minecraftPath = "/.minecraft";
 
+    #ifdef Q_OS_WIN
+        minecraftPath = QDir::cleanPath(QProcessEnvironment::systemEnvironment().value("APPDATA") + "/.minecraft");
+    #elif defined(Q_OS_MAC)
+        minecraftPath = QDir::cleanPath(QDir::homePath() + "/Library/Application Support/minecraft");
+    #elif defined(Q_OS_LINUX)
+        minecraftPath = QDir::cleanPath(QDir::homePath() + "/.minecraft");
+    #endif
+
+    return minecraftPath;
+}
 
 // --- UI & STYLING ---
 void MainWindow::setupStyles() {
@@ -1045,8 +1057,8 @@ void MainWindow::readSettings() {
 
     searchQuery = settings.value("searchQuery").toString();
     filters = settings.value("filters", {"all"}).toStringList();
-    
-    minecraftDirectory = settings.value("minecraftDirectory", QDir::cleanPath(QProcessEnvironment::systemEnvironment().value("APPDATA") + "/.minecraft")).toString();
+
+    minecraftDirectory = settings.value("minecraftDirectory", getBaseMinecraftPath()).toString();
     emit setMinecraftDirectoryDM(minecraftDirectory);
     emit setMinecraftDirectoryVM(minecraftDirectory);
     
@@ -1170,6 +1182,7 @@ void MainWindow::selectMinecraftDirectory(){
     emit setMinecraftDirectoryVM(minecraftDirectory);
     settings.setValue("minecraftDirectory", minecraftDirectory);
     MinecraftPathBtn->setToolTip(minecraftDirectory);
+    emit loadVersions();
 }
 
 

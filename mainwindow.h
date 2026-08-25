@@ -299,6 +299,7 @@ private:
     QComboBox *settingsLanguage;
     void showInfo();
     int getTotalRAM();
+    QString getBaseMinecraftPath();
     void readSettings();
     void changeLanguage(int index);
     void changeRAM(const int val);

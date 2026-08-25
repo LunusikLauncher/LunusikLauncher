@@ -211,6 +211,10 @@
         <source>cant_save_cache</source>
         <translation>Failed to save the local version list cache. Check disk write permissions.</translation>
     </message>
+    <message>
+        <source>unknown_system</source>
+        <translation>Unknown system.</translation>
+    </message>
 </context>
 
 <context>

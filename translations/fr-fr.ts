@@ -211,6 +211,10 @@
         <source>cant_save_cache</source>
         <translation>Échec de l'enregistrement du cache de la liste des versions locale. Vérifiez les autorisations d'écriture sur le disque.</translation>
     </message>
+    <message>
+        <source>unknown_system</source>
+        <translation>Système inconnu</translation>
+    </message>
 </context>
 
 <context>

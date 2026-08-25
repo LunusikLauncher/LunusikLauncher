@@ -211,6 +211,10 @@
         <source>cant_save_cache</source>
         <translation>Lokaler Versionslisten-Cache konnte nicht gespeichert werden. Überprüfen Sie die Schreibrechte auf der Festplatte.</translation>
     </message>
+    <message>
+        <source>unknown_system</source>
+        <translation>Unbekanntes System</translation>
+    </message>
 </context>
 
 <context>
