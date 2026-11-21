@@ -4,6 +4,26 @@
 #include "libs.h"
 #include "filescontrol.h"
 
+struct TarHeader {
+    char name[100];
+    char mode[8];
+    char uid[8];
+    char gid[8];
+    char size[12];
+    char mtime[12];
+    char chksum[8];
+    char typeflag;
+    char linkname[100];
+    char magic[6];
+    char version[2];
+    char uname[32];
+    char gname[32];
+    char devmajor[8];
+    char devminor[8];
+    char prefix[155];
+    char pad[12];
+};
+
 class DownloadManager : public FilesControl {
     Q_OBJECT
 public:
@@ -41,6 +61,7 @@ private:
     SystemConfig system;
     QString getHorizonSuffixes();
     QString getHashForFile(const QString &SHA256SUMS, const QString &targetFileName);
+    bool extractTarGz(const QString &path, const QString &outputDir, const QStringList &excludes, bool flatExtract);
     bool extractFile(const QString &zipPath, const QString &outputDir, const QStringList &excludes, bool flatExtract = true);
     bool decompressFile(const QString &inputPath, const QString &outputPath);
     bool setExecutable(const QString &filePath);

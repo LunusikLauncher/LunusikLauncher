@@ -330,7 +330,7 @@ void MinecraftManager::prepareHorizonResources(const QString &outputDir, const Q
     if (checkProcess.exitStatus() == QProcess::NormalExit && checkProcess.exitCode() == 0) {
         return;
     }
-
+    
     QStringList args;
     args << "--prepare"
          << "--output" << outputDir

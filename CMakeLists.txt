@@ -8,7 +8,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Svg Network Gui)
 qt_standard_project_setup()
 
 find_package(LibLZMA REQUIRED)
-
+find_package(ZLIB REQUIRED)
 add_executable(LunusikLauncher WIN32 main.cpp
                 mainwindow.cpp mainwindow.h 
                 manager.cpp manager.h 
@@ -24,4 +24,5 @@ target_link_libraries(LunusikLauncher PRIVATE
     Qt6::Svg 
     Qt6::Network 
     Qt6::GuiPrivate 
-    LibLZMA::LibLZMA)
+    LibLZMA::LibLZMA
+    ZLIB::ZLIB)

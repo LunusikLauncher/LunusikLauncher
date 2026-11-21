@@ -48,6 +48,7 @@
 #include <private/qzipreader_p.h>
 #include <QDesktopServices>
 #include <lzma.h>
+#include <zlib.h>
 #include <QStackedWidget>
 #include <QFontDatabase>
 #if defined(Q_OS_WIN)

@@ -360,8 +360,167 @@ void DownloadManager::downloadFiles(const QList<DownloadTask> files, const QStri
         installMoreFiles(dt, id);
     }
 }
+bool DownloadManager::extractTarGz(const QString &path, const QString &outputDir, const QStringList &excludes, bool flatExtract) {
+    gzFile gz = gzopen(path.toLocal8Bit().constData(), "rb");
+    if (!gz) {
+        emit showNotification(QCoreApplication::translate("Error", "cant_open_jar"), "Error");
+        qWarning() << "Cant open tar.gz: " << path;
+        return false;
+    }
+
+    QList<QZipReader::FileInfo> entries;
+    TarHeader header;
+    QString paxLongName;
+
+    while (gzread(gz, &header, 512) == 512) {
+        if (header.name[0] == '\0' && header.prefix[0] == '\0') break;
+
+        quint64 fileSize = QByteArray(header.size, 12).trimmed().toULongLong(nullptr, 8);
+        quint64 paddedSize = (fileSize + 511) & ~511ULL;
+
+        QString fullName;
+        if (!paxLongName.isEmpty()) {
+            fullName = paxLongName;
+            paxLongName.clear();
+        } else {
+            QString prefix = QString::fromUtf8(header.prefix, strnlen(header.prefix, 155));
+            QString name = QString::fromUtf8(header.name, strnlen(header.name, 100));
+            fullName = prefix.isEmpty() ? name : (prefix + "/" + name);
+        }
+
+        if (header.typeflag == 'L') {
+            QByteArray nameBuf(paddedSize, '\0');
+            gzread(gz, nameBuf.data(), paddedSize);
+            paxLongName = QString::fromUtf8(nameBuf.constData(), fileSize).trimmed();
+            continue;
+        }
+
+        if (header.typeflag == 'x' || header.typeflag == 'g') {
+            gzseek(gz, paddedSize, SEEK_CUR);
+            continue;
+        }
+
+        QZipReader::FileInfo info;
+        info.filePath = fullName;
+        info.isDir = (header.typeflag == '5' || fullName.endsWith('/'));
+        entries.append(info);
+
+        if (paddedSize > 0) {
+            gzseek(gz, paddedSize, SEEK_CUR);
+        }
+    }
+
+    const QString stripPrefix = flatExtract ? QString() : detectSingleRootPrefix(entries);
+    if (isAlreadyExtracted(entries, outputDir, stripPrefix, flatExtract)) {
+        gzclose(gz);
+        return true;
+    }
+
+    gzrewind(gz);
+    paxLongName.clear();
+    QDir dir;
+
+    while (gzread(gz, &header, 512) == 512) {
+        if (header.name[0] == '\0' && header.prefix[0] == '\0') break;
+
+        quint64 fileSize = QByteArray(header.size, 12).trimmed().toULongLong(nullptr, 8);
+        quint64 paddedSize = (fileSize + 511) & ~511ULL;
+
+        QString fullName;
+        if (!paxLongName.isEmpty()) {
+            fullName = paxLongName;
+            paxLongName.clear();
+        } else {
+            QString prefix = QString::fromUtf8(header.prefix, strnlen(header.prefix, 155));
+            QString name = QString::fromUtf8(header.name, strnlen(header.name, 100));
+            fullName = prefix.isEmpty() ? name : (prefix + "/" + name);
+        }
+
+        if (header.typeflag == 'L') {
+            QByteArray nameBuf(paddedSize, '\0');
+            gzread(gz, nameBuf.data(), paddedSize);
+            paxLongName = QString::fromUtf8(nameBuf.constData(), fileSize).trimmed();
+            continue;
+        }
+
+        bool isDir = (header.typeflag == '5' || fullName.endsWith('/'));
+        bool isRegularFile = (header.typeflag == '0' || header.typeflag == '\0');
+
+        if (isDir || !isRegularFile) {
+            if (paddedSize > 0) gzseek(gz, paddedSize, SEEK_CUR);
+            continue;
+        }
+
+        bool skip = false;
+        for (const QString &exclude : excludes) {
+            if (fullName.startsWith(exclude)) {
+                skip = true;
+                break;
+            }
+        }
+
+        QString relPath = fullName;
+        relPath.replace('\\', '/');
+
+        if (!stripPrefix.isEmpty()) {
+            if (!relPath.startsWith(stripPrefix)) skip = true;
+            else relPath = relPath.mid(stripPrefix.size());
+        }
+        if (relPath.isEmpty()) skip = true;
+
+        if (skip) {
+            if (paddedSize > 0) gzseek(gz, paddedSize, SEEK_CUR);
+            continue;
+        }
+
+        QString targetPath = flatExtract
+            ? outputDir + "/" + QFileInfo(relPath).fileName()
+            : outputDir + "/" + relPath;
+
+        if (!flatExtract) {
+            dir.mkpath(QFileInfo(targetPath).absolutePath());
+        }
+
+        QFile outFile(targetPath);
+        if (!outFile.open(QIODevice::WriteOnly)) {
+            emit showNotification(QCoreApplication::translate("Error", "cant_write_file"), "Error");
+            qWarning() << "Cant write to file: " << targetPath;
+            gzclose(gz);
+            return false;
+        }
+
+        char buffer[65536];
+        quint64 remaining = fileSize;
+        while (remaining > 0) {
+            int toRead = static_cast<int>(qMin<quint64>(remaining, sizeof(buffer)));
+            int bytesRead = gzread(gz, buffer, toRead);
+            if (bytesRead <= 0) break;
+            outFile.write(buffer, bytesRead);
+            remaining -= bytesRead;
+        }
+        outFile.close();
+
+        bool ok = false;
+        uint mode = QByteArray(header.mode, 8).trimmed().toUInt(&ok, 8);
+        if (ok && (mode & 0111)) {
+            QFile::setPermissions(targetPath,
+                QFile::permissions(targetPath) | QFileDevice::ExeOwner | QFileDevice::ExeGroup | QFileDevice::ExeOther);
+        }
+
+        quint64 padding = paddedSize - fileSize;
+        if (padding > 0) {
+            gzseek(gz, padding, SEEK_CUR);
+        }
+    }
+
+    gzclose(gz);
+    return true;
+}
 bool DownloadManager::extractFile(const QString &path, const QString &outputDir, const QStringList &excludes, bool flatExtract) {
     QDir dir;
+    if (path.endsWith("tar.gz", Qt::CaseInsensitive)) {
+        return extractTarGz(path, outputDir, excludes, flatExtract);
+    }
     if(!dir.mkpath(outputDir)){
         emit showNotification(QCoreApplication::translate("Error", "cant_create_dir"), "Error");
         qWarning() << "Error: cant create folder: " << outputDir;
