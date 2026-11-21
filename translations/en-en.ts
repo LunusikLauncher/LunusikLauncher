@@ -13,7 +13,7 @@
     </message>
     <message>
         <source>launcher_version</source>
-        <translation>v0.4.1 beta</translation>
+        <translation>v0.5.0 beta</translation>
     </message>
     <message>
         <source>current_language</source>
