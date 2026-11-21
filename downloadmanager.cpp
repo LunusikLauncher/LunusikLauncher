@@ -261,7 +261,7 @@ void DownloadManager::downloadMinecraftRust(const QString text, const QString id
     if (downloadTasks.isEmpty()) {
         return;
     }
-    downloadTasks.append({urlHorizon, fullPath + "/horizon_" + name.chopped(5) + ".zip", hashHorizon, 1000, true, false, false, "", fullPath, {}});
+    downloadTasks.append({urlHorizon, fullPath + "/" + name.chopped(5) + "_" + fileName, hashHorizon, 1000, true, false, false, "", fullPath, {}});
     downloadFiles(downloadTasks, text, id);
 }
 QList<DownloadTask> DownloadManager::createDownloadTasksJava(const QString name){
