@@ -48,6 +48,10 @@
         <translation>Snapshots</translation>
     </message>
     <message>
+        <source>filter_rust</source>
+        <translation>Rust</translation>
+    </message>
+    <message>
         <source>filter_old_alpha</source>
         <translation>Alphas</translation>
     </message>
@@ -138,6 +142,10 @@
     <message>
         <source>language</source>
         <translation>Langue</translation>
+    </message>
+    <message>
+        <source>screen_size</source>
+        <translation>Taille de la fenêtre Minecraft</translation>
     </message>
     <message>
         <source>RAM</source>

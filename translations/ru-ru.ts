@@ -48,6 +48,10 @@
         <translation>Снапшоты</translation>
     </message>
     <message>
+        <source>filter_rust</source>
+        <translation>Rust</translation>
+    </message>
+    <message>
         <source>filter_old_alpha</source>
         <translation>Альфы</translation>
     </message>
@@ -138,6 +142,10 @@
     <message>
         <source>language</source>
         <translation>Язык</translation>
+    </message>
+    <message>
+        <source>screen_size</source>
+        <translation>Размер окна Minecraft</translation>
     </message>
     <message>
         <source>RAM</source>

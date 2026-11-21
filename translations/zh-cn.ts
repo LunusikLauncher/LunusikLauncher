@@ -48,6 +48,10 @@
         <translation>快照</translation>
     </message>
     <message>
+        <source>filter_rust</source>
+        <translation>Rust</translation>
+    </message>
+    <message>
         <source>filter_old_alpha</source>
         <translation>旧 Alpha</translation>
     </message>
@@ -138,6 +142,10 @@
     <message>
         <source>language</source>
         <translation>语言</translation>
+    </message>
+    <message>
+        <source>screen_size</source>
+        <translation>Minecraft 窗口大小</translation>
     </message>
     <message>
         <source>RAM</source>

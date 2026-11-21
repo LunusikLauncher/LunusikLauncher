@@ -3,6 +3,8 @@
 
 #include <QSysInfo>
 #include <QMainWindow>
+#include <QGuiApplication>
+#include <QScreen>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -86,6 +88,7 @@ struct DownloadTask {
     qint64 size;
 
     bool isExtract = false;
+    bool isFlatExtract = true;
     bool isDecompress = false;
     QString hashDecompress;
 
@@ -102,7 +105,6 @@ struct gameParams {
     QString gameDir;
     QString nativesDir;
     QString assetsDir;
-    QString assetsIndex;
     QString uuid;
     QString accessToken;
     QString userType;

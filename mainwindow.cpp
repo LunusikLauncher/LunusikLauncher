@@ -1,51 +1,8 @@
 #include "mainwindow.h"
 #include "filescontrol.h"
 
-MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent) 
-    : QMainWindow(parent) {
-
-    DOWNLOAD_MANAGER = new DownloadManager();
-    VERSIONS_MANAGER = new VersionsManager(DOWNLOAD_MANAGER);
-
-    
-    threadDownloadManager = new QThread();
-    threadVersionsManager = new QThread();
-    
-    DOWNLOAD_MANAGER->moveToThread(threadDownloadManager);
-    VERSIONS_MANAGER->moveToThread(threadVersionsManager);
-
-    connect(VERSIONS_MANAGER, &VersionsManager::renderVersions, this, &MainWindow::renderVersions);
-    connect(DOWNLOAD_MANAGER, &DownloadManager::renderVersions, this, &MainWindow::renderVersions);
-
-    connect(this, &MainWindow::setMinecraftDirectoryVM, VERSIONS_MANAGER, &VersionsManager::setMinecraftDirectory);
-    connect(this, &MainWindow::loadVersions, VERSIONS_MANAGER, &VersionsManager::loadVersions);
-    connect(VERSIONS_MANAGER, &VersionsManager::showNotification, this, &MainWindow::showNotification);
-
-    connect(threadDownloadManager, &QThread::started, DOWNLOAD_MANAGER, &DownloadManager::init);
-    connect(DOWNLOAD_MANAGER, &DownloadManager::statusTextChanged, this, &MainWindow::updateProgressBarTitle);
-    connect(DOWNLOAD_MANAGER, &DownloadManager::progressUpdated, this, &MainWindow::updateProgress);
-    connect(DOWNLOAD_MANAGER, &DownloadManager::showOrHideProgress, this, &MainWindow::showOrHideProgress);
-    connect(DOWNLOAD_MANAGER, &DownloadManager::showNotification, this, &MainWindow::showNotification);
-    connect(this, &MainWindow::downloadMinecraft, DOWNLOAD_MANAGER, &DownloadManager::downloadMinecraft);
-    connect(this, &MainWindow::setMinecraftDirectoryDM, DOWNLOAD_MANAGER, &DownloadManager::setMinecraftDirectory);
-    threadDownloadManager->start();
-    threadVersionsManager->start();
-
-    setupStyles();
-    readSettings();
-    
-    centralWidget = new QWidget(this);
-    auto *WindowLayout = new QVBoxLayout(centralWidget);
-    WindowLayout->setSpacing(0);
-    WindowLayout->setContentsMargins(0, 0, 0, 0);
-    setCentralWidget(centralWidget);
+QWidget* MainWindow::createMainMenu() {
     auto *mainContent = new QWidget();
-    mainContent->setObjectName("mainContainer"); 
-    auto *centerWrapper = new QHBoxLayout();
-    centerWrapper->addStretch(1);
-    centerWrapper->addWidget(mainContent, 8);
-    centerWrapper->addStretch(1);
-    WindowLayout->addLayout(centerWrapper);
     auto *mainLayout = new QVBoxLayout(mainContent);
     mainLayout->setContentsMargins(20, 20, 20, 20);
     mainLayout->setSpacing(25);
@@ -69,7 +26,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     logoText->setStyleSheet("font-size: 24px; font-weight: bold; color: white; margin-left: 10px;");
     logoText->setGraphicsEffect(createGlow(15, QColor(138, 43, 226, 200)));
 
-    auto *logoContainer = new QHBoxLayout(); 
+    auto *logoContainer = new QHBoxLayout();
     logoContainer->setContentsMargins(0, 0, 0, 0);
     logoContainer->setSpacing(10);
     logoContainer->addWidget(iconBox);
@@ -78,7 +35,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
 
 
     auto *userPanel = new QHBoxLayout();
-    
+
     usernameLabel = new QLabel();
     usernameLabel->setObjectName("usernameLabel");
 
@@ -86,7 +43,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     usernameEL->setText(username);
     connect(usernameEL, &EditableLabel::textUpdate, this, &MainWindow::changeUsername);
 
-    auto *settingsBtn = new QPushButton(); 
+    auto *settingsBtn = new QPushButton();
     connect(settingsBtn, &QPushButton::clicked, this, [=]() {
         SettingsOverlay->show();
         SettingsOverlay->raise();
@@ -94,8 +51,8 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     settingsBtn->setObjectName("settingsBtn");
     settingsBtn->setFixedSize(30, 30);
     settingsBtn->setCursor(Qt::PointingHandCursor);
-    
-    auto *openFolderBtn = new QPushButton(); 
+
+    auto *openFolderBtn = new QPushButton();
     connect(openFolderBtn, &QPushButton::clicked, this, [=]() {
         QDesktopServices::openUrl(QUrl::fromLocalFile(minecraftDirectory));
     });
@@ -165,7 +122,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     )");
     btnUpdateVersions->setFixedSize(30, 30);
     btnUpdateVersions->setCursor(Qt::PointingHandCursor);
-    
+
     versionsSectionHead->addWidget(iconVersions);
     versionsSectionHead->addWidget(versionsTitleText);
     versionsSectionHead->addStretch();
@@ -211,7 +168,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     iconFilter->setAlignment(Qt::AlignCenter);
     filterTitleText = new QLabel();
     filterTitleText->setObjectName("section-title");
-    
+
     filterTitle->addWidget(iconFilter);
     filterTitle->addWidget(filterTitleText);
     filterTitle->addStretch();
@@ -224,7 +181,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     connect(searchInp, &QLineEdit::textChanged, this, &MainWindow::searchInpChanged);
 
     typeFlow = new FlowLayout(nullptr, 0, 8, 8);
-    QStringList types = {"filter_all", "filter_release", "filter_snapshot", "filter_old_alpha", "filter_old_beta"};
+    QStringList types = {"filter_all", "filter_release", "filter_snapshot", "filter_old_alpha", "filter_old_beta", "filter_rust"};
     bool isAllSelected = filters.contains("all");
 
     for(const QString &t : types) {
@@ -238,7 +195,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
         if(isAllSelected || filters.contains(shortType)){
             btn->setChecked(true);
         }
-        btn->setMinimumHeight(30); 
+        btn->setMinimumHeight(30);
         filterBtns.append(btn);
         connect(btn, &QPushButton::toggled, this, &MainWindow::clickFilterBtn);
 
@@ -278,7 +235,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     serverTitleText->setObjectName("section-title");
     serverTitleText->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
     serverTitleText->setFixedHeight(30);
-    
+
     serverTitle->addWidget(iconServer, 0, Qt::AlignVCenter);
     serverTitle->addWidget(serverTitleText, 0, Qt::AlignVCenter);
     serverTitle->addWidget(windowServerBtn, 0, Qt::AlignVCenter);
@@ -306,7 +263,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
         cb->setObjectName(label);
         auto *fieldContainer = new QWidget();
         auto *fieldLayout = new QHBoxLayout(fieldContainer);
-        
+
         fieldLayout->addStretch();
         fieldLayout->addWidget(cb);
         fieldLayout->setContentsMargins(0, 0, 0, 0);
@@ -319,7 +276,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     levelPathBtn = new QPushButton();
     levelPathBtn->setObjectName("get-path");
     levelPathBtn->setCursor(Qt::PointingHandCursor);
-    levelPathLayout->addStretch(); 
+    levelPathLayout->addStretch();
     levelPathLayout->addWidget(levelPathBtn);
     levelPathLayout->setContentsMargins(0, 0, 0, 0);
     form->addRow("level-name", levelPathContainer);
@@ -335,7 +292,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     maxPlayers->setObjectName("max-players");
     auto *maxPlayersContainer = new QWidget();
     auto *maxPlayersLayout = new QHBoxLayout(maxPlayersContainer);
-    maxPlayersLayout->addStretch(); 
+    maxPlayersLayout->addStretch();
     maxPlayersLayout->addWidget(maxPlayers);
     maxPlayersLayout->setContentsMargins(0, 0, 0, 0);
     form->addRow("max-players", maxPlayersContainer);
@@ -345,7 +302,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     serverPort->setObjectName("server-port");
     auto *serverPortContainer = new QWidget();
     auto *serverPortLayout = new QHBoxLayout(serverPortContainer);
-    serverPortLayout->addStretch(); 
+    serverPortLayout->addStretch();
     serverPortLayout->addWidget(serverPort);
     serverPortLayout->setContentsMargins(0, 0, 0, 0);
     form->addRow("server-port", serverPortContainer);
@@ -354,7 +311,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     motdInput->setObjectName("motd");
     auto *motdInputContainer = new QWidget();
     auto *motdInputLayout = new QHBoxLayout(motdInputContainer);
-    motdInputLayout->addStretch(); 
+    motdInputLayout->addStretch();
     motdInputLayout->addWidget(motdInput);
     motdInputLayout->setContentsMargins(0, 0, 0, 0);
     form->addRow("motd", motdInputContainer);
@@ -398,7 +355,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     iconProgress->setAlignment(Qt::AlignCenter);
     progressTitleText = new QLabel();
     progressTitleText->setObjectName("section-title");
-    
+
     progressBarPrecent = new QLabel("    ");
     progressBarPrecent->setObjectName("section-title");
     auto *progressCancel = new QHBoxLayout();
@@ -428,6 +385,75 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
 
     widgetProgressSection->hide();
     mainLayout->addWidget(widgetProgressSection);
+
+    serverContainer->hide();
+
+    return mainContent;
+}
+
+MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent) 
+    : QMainWindow(parent) {
+
+    DOWNLOAD_MANAGER = new DownloadManager();
+    VERSIONS_MANAGER = new VersionsManager(DOWNLOAD_MANAGER);
+
+    
+    threadDownloadManager = new QThread();
+    threadVersionsManager = new QThread();
+    
+    DOWNLOAD_MANAGER->moveToThread(threadDownloadManager);
+    VERSIONS_MANAGER->moveToThread(threadVersionsManager);
+
+    connect(VERSIONS_MANAGER, &VersionsManager::renderVersions, this, &MainWindow::renderVersions);
+    connect(DOWNLOAD_MANAGER, &DownloadManager::renderVersions, this, &MainWindow::renderVersions);
+
+    connect(this, &MainWindow::setMinecraftDirectoryVM, VERSIONS_MANAGER, &VersionsManager::setMinecraftDirectory);
+    connect(this, &MainWindow::loadVersions, VERSIONS_MANAGER, &VersionsManager::loadVersions);
+    connect(VERSIONS_MANAGER, &VersionsManager::showNotification, this, &MainWindow::showNotification);
+
+    connect(threadDownloadManager, &QThread::started, DOWNLOAD_MANAGER, &DownloadManager::init);
+    connect(DOWNLOAD_MANAGER, &DownloadManager::statusTextChanged, this, &MainWindow::updateProgressBarTitle);
+    connect(DOWNLOAD_MANAGER, &DownloadManager::progressUpdated, this, &MainWindow::updateProgress);
+    connect(DOWNLOAD_MANAGER, &DownloadManager::showOrHideProgress, this, &MainWindow::showOrHideProgress);
+    connect(DOWNLOAD_MANAGER, &DownloadManager::showNotification, this, &MainWindow::showNotification);
+    connect(this, &MainWindow::downloadMinecraft, DOWNLOAD_MANAGER, &DownloadManager::downloadMinecraft);
+    connect(this, &MainWindow::downloadMinecraftRust, DOWNLOAD_MANAGER, &DownloadManager::downloadMinecraftRust);
+    connect(this, &MainWindow::setMinecraftDirectoryDM, DOWNLOAD_MANAGER, &DownloadManager::setMinecraftDirectory);
+    threadDownloadManager->start();
+    threadVersionsManager->start();
+
+    setupStyles();
+    readSettings();
+    
+    centralWidget = new QWidget(this);
+    auto *WindowLayout = new QVBoxLayout(centralWidget);
+    WindowLayout->setSpacing(0);
+    WindowLayout->setContentsMargins(0, 0, 0, 0);
+    setCentralWidget(centralWidget);
+    auto sideBar = new QWidget();
+    sideBar->setObjectName("sideBar");
+    sideBar->setMinimumWidth(80);
+    auto *sideBarBtn = new SquareButton();
+    sideBarBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    sideBarBtn->setCursor(Qt::PointingHandCursor);
+    auto sideBarLayout = new QVBoxLayout(sideBar);
+    sideBarLayout->setContentsMargins(0, 0, 0, 0);
+    sideBarLayout->addWidget(sideBarBtn);
+    sideBarLayout->addStretch();
+    auto *centerWrapper = new QHBoxLayout();
+    auto mainContent = new QStackedWidget();
+    mainContent->setObjectName("mainContent");
+
+    mainContent->addWidget(createMainMenu());
+    connect(sideBarBtn, &QPushButton::clicked, [mainContent]() {
+        mainContent->setCurrentIndex(0);
+    });
+
+    centerWrapper->addWidget(sideBar, 1);
+    centerWrapper->addStretch(2);
+    centerWrapper->addWidget(mainContent, 8);
+    centerWrapper->addStretch(2);
+    WindowLayout->addLayout(centerWrapper);
 
     // --- FOOTER ---
     footer = new QLabel();
@@ -511,6 +537,36 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     FLSL->addWidget(settingsLanguage);
     FLSL->setContentsMargins(0, 0, 0, 0);
 
+    QSize maxScreenSize = getMaxScreenSize();
+    auto *settingsWidth = new QSpinBox();
+    settingsWidth->setFixedWidth(90);
+    settingsWidth->setMinimum(320);
+    settingsWidth->setMaximum(maxScreenSize.width());
+    settingsWidth->setSingleStep(1);
+    settingsWidth->setValue(MWindowWidth);
+    settingsWidth->setSuffix(" px");
+    settingsWidth->setObjectName("Width");
+    auto *settingsHeight = new QSpinBox();
+    settingsHeight->setFixedWidth(90);
+    settingsHeight->setMinimum(240);
+    settingsHeight->setMaximum(maxScreenSize.height());
+    settingsHeight->setSingleStep(1);
+    settingsHeight->setValue(MWindowHeight);
+    settingsHeight->setSuffix(" px");
+    settingsHeight->setObjectName("Height");
+
+    connect(settingsWidth, &QSpinBox::valueChanged, this, &MainWindow::changeWidth);
+    connect(settingsHeight, &QSpinBox::valueChanged, this, &MainWindow::changeHeight);
+
+    auto *FLSWH = new QHBoxLayout();
+    FLSWHL = new QLabel();
+    FLSWH->setAlignment(Qt::AlignVCenter);
+    FLSWH->addWidget(FLSWHL);
+    FLSWH->addStretch();
+    FLSWH->addWidget(settingsWidth);
+    FLSWH->addWidget(settingsHeight);
+    FLSWH->setContentsMargins(0, 0, 0, 0);
+
     auto *settingsRAM = new QSpinBox();
     settingsRAM->setFixedWidth(120);
     settingsRAM->setMinimum(1024);
@@ -532,6 +588,7 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
     
     settingsModalBodyLayout->addLayout(FLSLP);
     settingsModalBodyLayout->addLayout(FLSL);
+    settingsModalBodyLayout->addLayout(FLSWH);
     settingsModalBodyLayout->addLayout(FLSR);
     settingsModalBody->setObjectName("modalBody");
     settingsModalLayout->addWidget(settingsModalBody);
@@ -552,7 +609,8 @@ MainWindow::MainWindow(QSplashScreen *splash, QWidget *parent)
         disconnect(*connection);
     }, Qt::QueuedConnection);
 
-    serverContainer->hide();
+
+    sideBar->hide();
     this->resize(1180, 920);
     emit loadVersions();
 
@@ -599,6 +657,16 @@ int MainWindow::getTotalRAM() {
     }
     
     return 4096;
+}
+QSize MainWindow::getMaxScreenSize() {
+    QScreen *screen = QGuiApplication::primaryScreen();
+    if (!screen) return {854, 480};
+
+    qreal dpr = screen->devicePixelRatio();
+    int maxWidth = qRound(screen->geometry().width() * dpr);
+    int maxHeight = qRound(screen->geometry().height() * dpr);
+
+    return {maxWidth, maxHeight};
 }
 QString MainWindow::getBaseMinecraftPath() {
     QString minecraftPath = "/.minecraft";
@@ -709,6 +777,10 @@ void MainWindow::setupStyles() {
             background: #10b981;
             color: #ffffff;
         }
+        QLabel#versionType[type="rust"] {
+            background: #d97323;
+            color: #ffffff;
+        }
         QLineEdit, QSpinBox, QComboBox {
             padding: 8px 12px;
             font-size: 13px;
@@ -721,7 +793,6 @@ void MainWindow::setupStyles() {
             font-size: 13px;
             padding: 8px 10px;
             color: #e0d6f2;
-            min-width: 80px;
         }
         QLineEdit#searchInp {
             selection-background-color: #6d28d9;
@@ -859,10 +930,10 @@ void MainWindow::setupStyles() {
             color: #ef4444;
         }
         QWidget#latest-version-card {
-            background: #231934; /* Плотный слой, идеально сочетающийся с фоном панели */
-            border-radius: 12px; /* Привели к стандарту внутренних карточек */
-            padding: 15px; /* Исправлено: добавлен px */
-            border: 1px solid #382854; /* Исправлено: добавлен px, убран белый контур */
+            background: #231934;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #382854;
         }
         QWidget#latest-version-card:hover {
             background: #2b1f40;
@@ -879,19 +950,19 @@ void MainWindow::setupStyles() {
             font-weight: 600;
             margin-bottom: 10px;
             text-transform: uppercase;
-            color: #caa8ff; /* Более благородный оттенок фиолетового */
+            color: #caa8ff;
         }
         QWidget#latest-version-card-date {
             font-size: 12px;
-            color: #9381b5; /* Приглушенный цвет для второстепенных данных */
+            color: #9381b5;
         }
         QPushButton#latest-version-card-button {
-            background: #10b981; /* Мятно-зеленый (оставляем, если это кнопка "Скачать") */
+            background: #10b981;
             font-size: 13px;
             color: white;
             border: none;
             padding: 8px 16px;
-            border-radius: 8px; /* Скругление соответствует общей дизайн-системе */
+            border-radius: 8px;
             font-weight: 600;
         }
         QPushButton#latest-version-card-button:hover {
@@ -950,6 +1021,34 @@ void MainWindow::setupStyles() {
             font-weight: 600;
             font-size: 14px;
         }
+
+        QWidget#sideBar {
+            background: #1b1329;
+            border-right: 1px solid #231834;
+        }
+        QWidget#sideBar QPushButton {
+            background: #231934;
+            border: 1px solid #2d2045;
+            border-radius: 0px;
+            padding: 0px;
+
+            background-image: url(:/icons/home.svg);
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        QWidget#sideBar QPushButton:hover {
+            background: #2b1f40;
+            border: 1px solid #4a346b;
+
+            background-image: url(:/icons/home_hover.svg);
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        QWidget#sideBar QPushButton:pressed {
+            background: #7c3aed;
+            border: 1px solid #7c3aed;
+        }
+
         QScrollBar:vertical {
             border: none;
             background: #140e20;
@@ -983,7 +1082,7 @@ QGraphicsDropShadowEffect* MainWindow::createGlow(const int &blur, const QColor 
         return effect;
     }
 int MainWindow::scalingIcon(int size) {
-    return size * QWidget::devicePixelRatioF(); 
+    return size * QWidget::devicePixelRatioF();
 }
 void MainWindow::resizeEvent(QResizeEvent *event) {
     QMainWindow::resizeEvent(event);
@@ -1061,7 +1160,16 @@ void MainWindow::readSettings() {
     minecraftDirectory = settings.value("minecraftDirectory", getBaseMinecraftPath()).toString();
     emit setMinecraftDirectoryDM(minecraftDirectory);
     emit setMinecraftDirectoryVM(minecraftDirectory);
-    
+
+    MWindowWidth = settings.value("width", 854).toInt();
+    if (MWindowWidth < 320){
+        MWindowWidth = 320;
+    }
+    MWindowHeight = settings.value("height", 480).toInt();
+    if (MWindowHeight < 240){
+        MWindowHeight = 240;
+    }
+
     RAM = settings.value("RAM", 1024).toInt();
     if (RAM < 1024){
         RAM = 1024;
@@ -1084,6 +1192,18 @@ void MainWindow::changeRAM(const int val) {
 
     RAM = val;
     settings.setValue("RAM", val);
+}
+void MainWindow::changeWidth(const int val) {
+    QSettings settings;
+
+    MWindowWidth = val;
+    settings.setValue("width", val);
+}
+void MainWindow::changeHeight(const int val) {
+    QSettings settings;
+
+    MWindowHeight = val;
+    settings.setValue("height", val);
 }
 void MainWindow::changeUsername(const QString newUsername) {
     QSettings settings;
@@ -1128,6 +1248,7 @@ void MainWindow::updateStrings() {
     MinecraftPathBtn->setText(tr("select_path"));
     FLSLPL->setText(tr("minecraft_path"));
     FLSLL->setText(tr("language"));
+    FLSWHL->setText(tr("screen_size"));
     FLSRL->setText(tr("RAM"));
 
     
@@ -1537,11 +1658,24 @@ void MainWindow::clickDownloadMinecraft(QWidget *item) {
                 showNotification(QCoreApplication::translate("Success", "install_success_version").arg(name), "Success");
                 applyFilter();
             }
-            disconnect(*connection); 
+            disconnect(*connection);
         }
     });
     btnCancel->setProperty("id", uuid);
-    emit downloadMinecraft((tr("install_active") + " " + name), uuid, name, btn->property("hash").toString(), btn->property("url").toString());
+    if (btn->property("type").toString() == "rust") {
+        emit downloadMinecraftRust((tr("install_active") + " " + name),
+                                    uuid,
+                                    name,
+                                    btn->property("hash").toString(),
+                                    btn->property("url").toString());
+    }
+    else {
+        emit downloadMinecraft((tr("install_active") + " " + name),
+                                uuid,
+                                name,
+                                btn->property("hash").toString(),
+                                btn->property("url").toString());
+    }
 }
 void MainWindow::clickBtnCancel() {
     auto *btn = qobject_cast<QPushButton*>(sender());
@@ -1557,20 +1691,18 @@ void MainWindow::clickPlayMinecraft() {
     QString name = btn->property("name").toString();
     gameParams params = {minecraftDirectory,
                         username, 
-                        name, 
+                        name,
                         minecraftDirectory + "/versions/" + name,
                         minecraftDirectory + "/versions/" + name + "/natives",
                         minecraftDirectory + "/assets",
-                        name,
                         "00000000-0000-0000-0000-000000000000",
                         "00000000000000000000000000000000",
                         "mojang",
                         btn->property("type").toString(),
                         tr("launcher_name"),
                         tr("launcher_version"),
-                        "200",
-                        "200",
-                    
+                        QString::number(MWindowHeight),
+                        QString::number(MWindowWidth),
                         btn->property("hash").toString(),
                         btn->property("url").toString(),
                         QString::number(RAM)};

@@ -15,6 +15,8 @@ signals:
 private:
 
 protected:
+    bool isAlreadyExtracted(const QList<QZipReader::FileInfo> &entries, const QString &outputDir, const QString &prefix, bool flatExtract);
+    QString detectSingleRootPrefix(const QList<QZipReader::FileInfo> &entries);
     bool checkRules(const QJsonArray rules, const SystemConfig &system);
     bool isVersionOlderOrEqual(const QString &current, const QString &target);
     bool isExistsAndValid(QFile &file, const QString &hashFile);

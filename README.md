@@ -22,7 +22,7 @@ Currently, the launcher only works on Windows and Linux, but support for other p
 
 ### Windows
 To compile this launcher on Windows, run the script:
-```cmd
+```bash
 ./builds/compile_windows.bat
 ```
 

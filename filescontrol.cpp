@@ -2,6 +2,51 @@
 
 FilesControl::FilesControl(QObject *parent) : Manager(parent){}
 
+bool FilesControl::isAlreadyExtracted(const QList<QZipReader::FileInfo> &entries, const QString &outputDir, const QString &prefix, bool flatExtract) {
+    for (const auto &info : entries) {
+        if (info.isDir) continue;
+
+        QString rel = info.filePath;
+        if (!prefix.isEmpty() && rel.startsWith(prefix))
+            rel = rel.mid(prefix.size());
+        if (rel.isEmpty()) continue;
+
+        const QString target = flatExtract
+            ? outputDir + "/" + QFileInfo(rel).fileName()
+            : outputDir + "/" + rel;
+
+        const QFileInfo fi(target);
+        if (!fi.exists() || fi.size() != info.size)
+            return false;
+    }
+    return true;
+}
+QString FilesControl::detectSingleRootPrefix(const QList<QZipReader::FileInfo> &entries)
+{
+    QString root;
+    bool first = true;
+
+    for (const QZipReader::FileInfo &info : entries) {
+        QString p = info.filePath;
+        p.replace('\\', '/');
+        if (p.isEmpty()) continue;
+
+        int slash = p.indexOf('/');
+        QString top;
+        if (slash < 0) {
+            if (!info.isDir) return QString();
+            top = p;
+        } else {
+            top = p.left(slash);
+        }
+
+        if (first) { root = top; first = false; }
+        else if (top != root) return QString();
+    }
+
+    if (first || root.isEmpty()) return QString();
+    return root + '/';
+}
 bool FilesControl::checkRules(const QJsonArray rules, const SystemConfig &system){
     bool isInstall = false;
 

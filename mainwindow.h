@@ -6,6 +6,16 @@
 #include "versionsmanager.h"
 #include "minecraftmanager.h"
 
+class SquareButton : public QPushButton {
+public:
+    using QPushButton::QPushButton;
+
+    bool hasHeightForWidth() const override { return true; }
+
+    int heightForWidth(int w) const override { return w; }
+};
+
+
 class GradientLabel : public QLabel {
 public:
     GradientLabel(const QString &text, QColor start, QColor end, QWidget *parent = nullptr)
@@ -274,6 +284,7 @@ public slots:
 signals:
     void loadVersions(const bool isUpdateRequired = false);
     void downloadMinecraft(const QString text, const QString id, const QString name, const QString hashManifest, const QString url);
+    void downloadMinecraftRust(const QString text, const QString id, const QString name, const QString hashManifest, const QString url);
     void setMinecraftDirectoryDM(const QString minecraftDirectory);
     void setMinecraftDirectoryVM(const QString minecraftDirectory);
 
@@ -286,6 +297,8 @@ private:
     VersionsManager *VERSIONS_MANAGER;
 
     // --- UI & STYLING ---
+    QWidget* createMainMenu();
+
     void setupStyles();
     QGraphicsDropShadowEffect* createGlow(const int &blur, const QColor &color);
     int scalingIcon(int size);
@@ -297,12 +310,17 @@ private:
     int RAM;
     QString username;
     QComboBox *settingsLanguage;
+    int MWindowHeight;
+    int MWindowWidth;
     void showInfo();
     int getTotalRAM();
+    QSize getMaxScreenSize();
     QString getBaseMinecraftPath();
     void readSettings();
     void changeLanguage(int index);
     void changeRAM(const int val);
+    void changeWidth(const int val);
+    void changeHeight(const int val);
     void changeUsername(const QString newUsername);
     void setLanguage(QString langCode);
     void updateStrings();
@@ -363,6 +381,7 @@ private:
     QPushButton *MinecraftPathBtn;
     QLabel *FLSLPL;
     QLabel *FLSLL;
+    QLabel *FLSWHL;
     QLabel *FLSRL;
 
     // --- ARRAY STRINGS ---

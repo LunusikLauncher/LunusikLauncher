@@ -48,6 +48,10 @@
         <translation>スナップショット</translation>
     </message>
     <message>
+        <source>filter_rust</source>
+        <translation>Rust</translation>
+    </message>
+    <message>
         <source>filter_old_alpha</source>
         <translation>アルファ</translation>
     </message>
@@ -138,6 +142,10 @@
     <message>
         <source>language</source>
         <translation>言語</translation>
+    </message>
+    <message>
+        <source>screen_size</source>
+        <translation>Minecraftのウィンドウサイズ</translation>
     </message>
     <message>
         <source>RAM</source>

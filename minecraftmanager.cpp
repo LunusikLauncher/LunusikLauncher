@@ -32,6 +32,7 @@ DOWNLOAD_MANAGER(DOWNLOAD_MANAGER) {
                 .version = QSysInfo::kernelVersion(),
                 .arch    = arch};
     connect(this, &MinecraftManager::checkFiles, DOWNLOAD_MANAGER, &DownloadManager::downloadMinecraft);
+    connect(this, &MinecraftManager::checkRustFiles, DOWNLOAD_MANAGER, &DownloadManager::downloadMinecraftRust);
     connect(this, &MinecraftManager::hideWindow, mainwindow, &QWidget::hide);
 }
 
@@ -39,7 +40,6 @@ DOWNLOAD_MANAGER(DOWNLOAD_MANAGER) {
 void MinecraftManager::startMinecraft(){
     QDir dir;
     QFile vm(data.gameDir + "/" + data.version + ".json");
-    
     if (!vm.open(QIODevice::ReadOnly)){
         emit showNotification(QCoreApplication::translate("Error", "cant_read_file"), "Error");
         qWarning() << "Cant open version manifest";
@@ -47,8 +47,77 @@ void MinecraftManager::startMinecraft(){
     }
     QJsonObject versionManifest = QJsonDocument::fromJson(vm.readAll()).object();
     vm.close();
+    const QString javaHome = QString("%1/Java/%2").arg(data.minecraftDir, versionManifest["javaVersion"].toObject()["component"].toString());
+    const QString javaPath = javaHome + "/bin/" + javaExe;
+    const bool isRust = data.versionType == "rust";
+    if (isRust) {
+        const QString uuid = QUuid::createUuid().toString();
 
-    QFile am(data.minecraftDir + "/assets/indexes/" + data.version + ".json");
+        QString horizonClient;
+        #ifdef Q_OS_WIN
+            horizonClient = "horizon-client.exe";
+        #else
+            horizonClient = "horizon-client";
+        #endif
+        const QString localClient = data.gameDir + "/" + horizonClient;
+        if (QFile::exists(localClient)) horizonClient = localClient;
+
+        QJsonObject session;
+        session["name"] = data.username;
+        session["uuid"] = QUuid::createUuid().toString().remove("{").remove("}");
+        if (!data.userType.isEmpty()) session["user_type"] = data.userType;
+        const QByteArray sessionJson = QJsonDocument(session).toJson(QJsonDocument::Compact);
+
+        QStringList horizonArgs;
+        const QString preparedResourcesDir = data.minecraftDir + "/prepared_resources";
+        horizonArgs << "--resources" << preparedResourcesDir
+                    << "--game-dir"  << data.minecraftDir
+                    << "--home"      << data.minecraftDir
+                    << "--width"     << QString::number(data.width.toInt())
+                    << "--height"    << QString::number(data.height.toInt())
+                    << "--session-stdin";
+
+        auto connection = std::make_shared<QMetaObject::Connection>();
+        *connection = connect(DOWNLOAD_MANAGER, &DownloadManager::finished, this,
+            [this, connection, javaHome, preparedResourcesDir, horizonClient, horizonArgs, sessionJson, uuid](bool success, const QString id) {
+                if (id != uuid) return;
+                if (!success) { disconnect(*connection); return; }
+
+                emit hideWindow();
+                prepareHorizonResources(preparedResourcesDir, javaHome);
+
+                QProcess *process = new QProcess();
+                QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+                env.insert("SHED_FORCE_NVIDIA", "1");
+                env.insert("__NV_PRIME_RENDER_OFFLOAD", "1");
+                env.insert("__GLX_VENDOR_LIBRARY_NAME", "nvidia");
+                process->setProcessEnvironment(env);
+                process->setWorkingDirectory(data.minecraftDir);
+                process->start(horizonClient, horizonArgs);
+
+                if (process->waitForStarted()) {
+                    process->write(sessionJson);
+                    process->closeWriteChannel();
+                    process->waitForFinished(-1);
+                    qDebug() << "Horizon STDOUT:" << process->readAllStandardOutput();
+                    qDebug() << "Horizon STDERR:" << process->readAllStandardError();
+                    if (process->exitCode() != 0)
+                        qWarning() << "Horizon exited with code" << process->exitCode();
+                } else {
+                    emit showNotification(QCoreApplication::translate("Error", "cant_start_minecraft"), "Error");
+                    qWarning() << "Cant start horizon-client:" << process->errorString();
+                }
+
+                process->deleteLater();
+                emit exit();
+                disconnect(*connection);
+            });
+
+        emit checkRustFiles(QCoreApplication::translate("MainWindow", "check_files") + " " + data.version, uuid, data.version, data.hashManifest,  data.urlManifest);
+        return;
+    }
+    QString assetsIndex = versionManifest["assets"].toString();
+    QFile am(data.minecraftDir + "/assets/indexes/" + assetsIndex + ".json");
     if (!am.open(QIODevice::ReadOnly)){
         emit showNotification(QCoreApplication::translate("Error", "cant_read_file"), "Error");
         qWarning() << "Cant open assets manifest";
@@ -129,7 +198,7 @@ void MinecraftManager::startMinecraft(){
         {"natives_directory", data.nativesDir},
         {"assets_root", data.assetsDir},
         {"game_assets", data.minecraftDir + "/resources"},
-        {"assets_index_name", data.assetsIndex},
+        {"assets_index_name", assetsIndex},
         {"auth_uuid", data.uuid},
         {"auth_access_token", data.accessToken},
         {"auth_session", data.accessToken},
@@ -175,7 +244,7 @@ void MinecraftManager::startMinecraft(){
         command << replaceVars(versionManifest["minecraftArguments"].toString(), vars).split(" ");
     }
     auto connection = std::make_shared<QMetaObject::Connection>();
-    *connection = connect(DOWNLOAD_MANAGER, &DownloadManager::finished, this, [this, connection, versionManifest, command, uuid](bool success, const QString id) {
+    *connection = connect(DOWNLOAD_MANAGER, &DownloadManager::finished, this, [this, connection, javaPath, command, uuid](bool success, const QString id) {
         if(id == uuid){
             if(success){
                 emit hideWindow();
@@ -189,7 +258,6 @@ void MinecraftManager::startMinecraft(){
                 process->setProcessEnvironment(env);
                 process->setWorkingDirectory(data.minecraftDir);
 
-                const QString javaPath = QString("%1/Java/%2/bin/" + javaExe).arg(data.minecraftDir, versionManifest["javaVersion"].toObject()["component"].toString());
                 QFile::setPermissions(javaPath, QFileDevice::Permission(0x755));
                 process->start(javaPath, command);
                 
@@ -197,7 +265,7 @@ void MinecraftManager::startMinecraft(){
                     process->waitForFinished(-1); 
                     QByteArray output = process->readAllStandardOutput();
                     QByteArray errors = process->readAllStandardError();
-
+                    qDebug() << command;
                     qDebug() << "STDOUT:" << output;
                     qDebug() << "STDERR:" << errors; 
                 }
@@ -244,6 +312,45 @@ QStringList MinecraftManager::processArguments(const QJsonArray &argsArray, cons
     }
     return result;
 }
+void MinecraftManager::prepareHorizonResources(const QString &outputDir, const QString &javaHome) {
+    QString prepareExe = "horizon-prepare";
+    #ifdef Q_OS_WIN
+        prepareExe += ".exe";
+    #endif
+    const QString localPrep = QDir(data.gameDir).filePath(prepareExe);
+    if (QFile::exists(localPrep)) prepareExe = localPrep;
+
+    QProcess checkProcess;
+    QStringList checkArgs;
+    checkArgs << "--check" << "--output" << outputDir;
+
+    checkProcess.start(prepareExe, checkArgs);
+    checkProcess.waitForFinished(-1);
+
+    if (checkProcess.exitStatus() == QProcess::NormalExit && checkProcess.exitCode() == 0) {
+        return;
+    }
+
+    QStringList args;
+    args << "--prepare"
+         << "--output" << outputDir
+         << "--minecraft-dir" << data.minecraftDir
+         << "--server-jar" << QDir(data.gameDir.chopped(5)).filePath("server-26.3.jar")
+         << "--complete";
+
+    if (!javaHome.isEmpty()) {
+        args << "--java-home" << javaHome;
+    }
+
+    QProcess prepareProcess;
+    prepareProcess.start(prepareExe, args);
+    prepareProcess.waitForFinished(-1);
+    qDebug() << "Prepare STDOUT:" << prepareProcess.readAllStandardOutput();
+    qDebug() << "Prepare STDERR:" << prepareProcess.readAllStandardError();
+    if (prepareProcess.exitCode() != 0) {
+        qWarning() << "Horizon prepare failed:" << prepareProcess.readAllStandardError();
+    }
+}
 bool MinecraftManager::checkRule(const QJsonObject &rule, const SystemConfig &system) {
     if (!rule.contains("os") && !rule.contains("features")) return true;
 
@@ -269,7 +376,7 @@ bool MinecraftManager::checkRule(const QJsonObject &rule, const SystemConfig &sy
         }
     }
 
-    if (rule.contains("features")) {
+    if (rule.contains("features") && !rule["features"].toObject().contains("has_custom_resolution")) {
         return false;
     }
 
@@ -282,3 +389,4 @@ QString MinecraftManager::replaceVars(QString str, const QMap<QString, QString> 
     }
     return str;
 }
+

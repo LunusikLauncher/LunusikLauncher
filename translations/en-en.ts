@@ -47,6 +47,10 @@
         <source>filter_snapshot</source>
         <translation>Snapshots</translation>
     </message>
+        <message>
+        <source>filter_rust</source>
+        <translation>Rust</translation>
+    </message>
     <message>
         <source>filter_old_alpha</source>
         <translation>Alphas</translation>
@@ -138,6 +142,10 @@
     <message>
         <source>language</source>
         <translation>Language</translation>
+    </message>
+    <message>
+        <source>screen_size</source>
+        <translation>Minecraft window size</translation>
     </message>
     <message>
         <source>RAM</source>

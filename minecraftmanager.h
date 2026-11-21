@@ -15,6 +15,8 @@ signals:
     void hideWindow();
     void exit();
     void checkFiles(const QString text, const QString id, const QString name, const QString hashManifest, const QString url);
+    void checkRustFiles(const QString text, const QString id, const QString name, const QString hashManifest, const QString url);
+
 private:
     DownloadManager* DOWNLOAD_MANAGER;
     gameParams data;
@@ -23,5 +25,6 @@ private:
     bool checkRule(const QJsonObject &rule, const SystemConfig &system);
     QStringList processArguments(const QJsonArray &argsArray, const QMap<QString, QString> &vars, const SystemConfig &system);
     QString replaceVars(QString str, const QMap<QString, QString> &vars);
+    void prepareHorizonResources(const QString &outputDir, const QString &javaHome);
 };
 #endif

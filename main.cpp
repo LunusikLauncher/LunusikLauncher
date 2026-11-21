@@ -8,8 +8,9 @@ int main(int argc, char *argv[]) {
 
     QCoreApplication::setOrganizationName("no.id");
     QCoreApplication::setApplicationName("LunusikLauncher");
+
     QIcon icon(":/icons/LLL.ico");
-    QSplashScreen* splash = new QSplashScreen(icon.pixmap(120, 120)); // Статичное фото для начала
+    QSplashScreen* splash = new QSplashScreen(icon.pixmap(120, 120));
     splash->show();
     splash->showMessage("Launching...", Qt::AlignBottom | Qt::AlignHCenter, Qt::white);
     app.processEvents();
@@ -18,8 +19,8 @@ int main(int argc, char *argv[]) {
     if (fontId != -1) {
         QString fontName = QFontDatabase::applicationFontFamilies(fontId).at(0);
     }
-    MainWindow w(splash);
 
+    MainWindow w(splash);
     w.setWindowIcon(icon); 
 
     return app.exec();

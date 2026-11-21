@@ -62,46 +62,22 @@ void DownloadManager::notificationAndCancel(const QString id, const QString mess
     cancelDownload(id);
     emit showNotification(message, type);
 }
-void DownloadManager::downloadMinecraft(const QString text, const QString id, const QString name, const QString hashManifest, const QString url) {
-    if (isBreakDownload) return;
-
-    emit showOrHideProgress(true);
-    emit statusTextChanged(text);
-
-    QDir dir;
-
-    if(name.isEmpty() || url.isEmpty()){
-        notificationAndCancel(id, QCoreApplication::translate("Error", "invalid_version_data"), "Error");
-        qWarning() << "Error: invalid data";
-        return;
-    }
-
+QList<DownloadTask> DownloadManager::createDownloadTasksMinecraft(const QString id, const QString name, const QString hashManifest, const QString url) {
     QString pathVersion = "/versions/" + name + "/";
-    QStringList dirs = { "/assets/indexes", "/assets/objects", "/libraries", pathVersion};
-    for (const QString &subDir : dirs) {
-        QString fullPath = minecraftDirectory + subDir;
-        if (!dir.exists(fullPath)) {
-            if (!dir.mkpath(fullPath)) {
-                notificationAndCancel(id, QCoreApplication::translate("Error", "cant_create_dir"), "Error");
-                qWarning() << "Error: can't create folder" << fullPath;
-                return;
-            }
-        }
-    }
 
     QJsonObject versionManifest;
     if(!installOneFile(url, minecraftDirectory + pathVersion + name + ".json", &versionManifest, hashManifest)){
         notificationAndCancel(id, QCoreApplication::translate("Error", "version_manifest").arg(name), "Error");
         qWarning() << "Loading error: cant install manifest for minecraft " << name;
-        return;
+        return {};
     }
 
     QJsonObject assetsManifest;
     const QJsonObject assetIndex = versionManifest["assetIndex"].toObject();
-    if(!installOneFile(assetIndex["url"].toString(), minecraftDirectory + "/assets/indexes/" + name + ".json", &assetsManifest, assetIndex["sha1"].toString())){
+    if(!installOneFile(assetIndex["url"].toString(), minecraftDirectory + "/assets/indexes/" + assetIndex["id"].toString() + ".json", &assetsManifest, assetIndex["sha1"].toString())){
         notificationAndCancel(id, QCoreApplication::translate("Error", "assets_manifest").arg(name), "Error");
         qWarning() << "Loading error: cant install assets manifest for minecraft " << name;
-        return;
+        return {};
     }
 
     const QJsonObject objects = assetsManifest["objects"].toObject();
@@ -119,7 +95,7 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
     for (const QJsonValue &lib_val : libraries ){
         const QJsonObject lib = lib_val.toObject();
         const QJsonObject downloads = lib["downloads"].toObject();
-        
+
         if(lib.contains("rules")){
             const QJsonArray rules = lib["rules"].toArray();
             if(!checkRules(rules, system)){
@@ -143,7 +119,7 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
             hashArtifact = artifact["sha1"].toString();
             sizeFile = artifact["size"].toInt();
         }
-        
+
         if(downloads.contains("classifiers")){
             const QJsonObject classifiers = downloads["classifiers"].toObject();
             QString classifierKey = lib["natives"].toObject()[system.name].toString();
@@ -174,7 +150,7 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
                     }
                 }
             }
-            downloadTasks.append({urlClassifiers, pathClassifiers, hashClassifiers, sizeFile, true, false, "", pathToNatives, excludes});
+            downloadTasks.append({urlClassifiers, pathClassifiers, hashClassifiers, sizeFile, true,true, false, "", pathToNatives, excludes});
         }
     }
     for (auto it = objects.begin(); it != objects.end(); ++it) {
@@ -184,16 +160,117 @@ void DownloadManager::downloadMinecraft(const QString text, const QString id, co
         qint64 size = data["size"].toVariant().toLongLong();
         QString firstTwo = hash.left(2);
         QString url = "https://resources.download.minecraft.net/" + firstTwo + "/" + hash;
-        
-        QString path = minecraftDirectory + "/assets/objects/" + firstTwo + "/" + hash; 
+
+        QString path = minecraftDirectory + "/assets/objects/" + firstTwo + "/" + hash;
         downloadTasks.append({url, path, hash, size});
     }
-    downloadTasks << downloadJava(versionManifest["javaVersion"].toObject()["component"].toString());
+    downloadTasks << createDownloadTasksJava(versionManifest["javaVersion"].toObject()["component"].toString());
 
+    return downloadTasks;
+}
+void DownloadManager::downloadMinecraft(const QString text, const QString id, const QString name, const QString hashManifest, const QString url) {
+    if (isBreakDownload) return;
+
+    emit showOrHideProgress(true);
+    emit statusTextChanged(text);
+
+    QDir dir;
+
+    if(name.isEmpty() || url.isEmpty()){
+        notificationAndCancel(id, QCoreApplication::translate("Error", "invalid_version_data"), "Error");
+        qWarning() << "Error: invalid data";
+        return;
+    }
+
+    QStringList dirs = { "/assets/indexes", "/assets/objects", "/libraries", "/versions/" + name + "/"};
+    for (const QString &subDir : dirs) {
+        QString fullPath = minecraftDirectory + subDir;
+        if (!dir.exists(fullPath)) {
+            if (!dir.mkpath(fullPath)) {
+                notificationAndCancel(id, QCoreApplication::translate("Error", "cant_create_dir"), "Error");
+                qWarning() << "Error: can't create folder" << fullPath;
+                return;
+            }
+        }
+    }
+    QList<DownloadTask> downloadTasks = createDownloadTasksMinecraft(id, name, hashManifest, url);
+    if (downloadTasks.isEmpty()) {
+        return;
+    }
     downloadFiles(downloadTasks, text, id);
 }
+QString DownloadManager::getHorizonSuffixes() {
+    QString suffixes;
+    #if defined(Q_OS_WIN)
+        #if defined(Q_PROCESSOR_ARM_64) || defined(__aarch64__)
+            suffixes = "windows-arm64.zip";
+        #endif
+        suffixes = "windows-x64.zip";
+    #elif defined(Q_OS_MACOS) || defined(Q_OS_MAC)
+        #if defined(Q_PROCESSOR_ARM_64) || defined(__aarch64__)
+            suffixes = "macos-aarch64.zip" << "macos-arm64.zip";
+        #endif
+        suffixes = "macos-x64.zip";
+    #elif defined(Q_OS_LINUX)
+        #if defined(Q_PROCESSOR_ARM_64) || defined(__aarch64__)
+            suffixes = "linux-aarch64.zip" << "linux-arm64.zip";
+        #endif
+        suffixes = "linux-x64.zip";
+    #endif
+    return suffixes;
+}
+QString DownloadManager::getHashForFile(const QString &SHA256SUMS, const QString &targetFileName) {
+    for (const QString &line : SHA256SUMS.split('\n', Qt::SkipEmptyParts)) {
+        const QStringList parts = line.simplified().split(' ');
+        if (parts.size() >= 2 && parts[1] == targetFileName) {
+            return parts[0].toLower();
+        }
+    }
+    return QString();
+}
+void DownloadManager::downloadMinecraftRust(const QString text, const QString id, const QString name, const QString hashManifest, const QString url) {
+    if (isBreakDownload) return;
 
-QList<DownloadTask> DownloadManager::downloadJava(const QString name){
+    emit showOrHideProgress(true);
+    emit statusTextChanged(text);
+    QDir dir;
+    QFile file_SHA256SUMS(minecraftDirectory + "/versions/" + name + "/SHA256SUMS");
+    if(!file_SHA256SUMS.open(QIODevice::ReadOnly)) {
+        installOneFile("https://github.com/horizon-rust/horizon/releases/download/nightly/SHA256SUMS", minecraftDirectory + "/versions/" + name + "/SHA256SUMS");
+        if (!file_SHA256SUMS.open(QIODevice::ReadOnly)) {
+            notificationAndCancel(id, QCoreApplication::translate("Error", "cant_write_file"), "Error");
+            qWarning() << "Error: can't open file" << file_SHA256SUMS.fileName();
+            return;
+        }
+    }
+    QString SHA256SUMS = QString::fromUtf8(file_SHA256SUMS.readAll());
+    file_SHA256SUMS.close();
+
+    QString fullPath = minecraftDirectory + "/versions/" + name;
+    QString fileName = "horizon-" + getHorizonSuffixes();
+    QString urlHorizon = "https://github.com/horizon-rust/horizon/releases/download/nightly/" + fileName;
+    QString hashHorizon = getHashForFile(SHA256SUMS, fileName);
+    qDebug() << "hashHorizon:" << hashHorizon;
+    if (!dir.exists(fullPath)) {
+        if (!dir.mkpath(fullPath)) {
+            notificationAndCancel(id, QCoreApplication::translate("Error", "cant_create_dir"), "Error");
+            qWarning() << "Error: can't create folder" << fullPath;
+            return;
+        }
+    }
+    if(!installOneFile(url, fullPath + "/" + name + ".json", hashManifest)){
+        notificationAndCancel(id, QCoreApplication::translate("Error", "version_manifest").arg(name), "Error");
+        qWarning() << "Loading error: cant install manifest for minecraft " << name;
+        return;
+    }
+    QList<DownloadTask> downloadTasks = createDownloadTasksMinecraft(id, name.chopped(5), hashManifest, url);
+    if (downloadTasks.isEmpty()) {
+        return;
+    }
+    downloadTasks.append({urlHorizon, fullPath + "/horizon_" + name.chopped(5) + ".zip", hashHorizon, 1000, true, false, false, "", fullPath, {}});
+    downloadFiles(downloadTasks, text, id);
+}
+QList<DownloadTask> DownloadManager::createDownloadTasksJava(const QString name){
     QList<DownloadTask> downloadTasks;
 
     if (isBreakDownload) return downloadTasks;
@@ -265,7 +342,7 @@ QList<DownloadTask> DownloadManager::downloadJava(const QString name){
 
         QString path = it.key(); 
         if (isLzma){
-            downloadTasks.append({url, javaDir + "lzma/" + path, hash, size, false, true, hashDecompress, javaDir + path, QStringList(), executable});
+            downloadTasks.append({url, javaDir + "lzma/" + path, hash, size, false,true, true, hashDecompress, javaDir + path, QStringList(), executable});
         }
         else{
             downloadTasks.append({url, javaDir + path, hash, size});
@@ -289,7 +366,7 @@ void DownloadManager::downloadFiles(const QList<DownloadTask> files, const QStri
         installMoreFiles(dt, id);
     }
 }
-bool DownloadManager::extractFile(const QString &path, const QString &outputDir, const QStringList &excludes) {
+bool DownloadManager::extractFile(const QString &path, const QString &outputDir, const QStringList &excludes, bool flatExtract) {
     QDir dir;
     if(!dir.mkpath(outputDir)){
         emit showNotification(QCoreApplication::translate("Error", "cant_create_dir"), "Error");
@@ -306,7 +383,15 @@ bool DownloadManager::extractFile(const QString &path, const QString &outputDir,
         return false;
     }
 
-    for (const QZipReader::FileInfo &info : zip.fileInfoList()) {
+    const QList<QZipReader::FileInfo> entries = zip.fileInfoList();
+    const QString stripPrefix = flatExtract ? QString() : detectSingleRootPrefix(entries);
+
+    if (isAlreadyExtracted(entries, outputDir, stripPrefix, flatExtract)) {
+        zip.close();
+        return true;
+    }
+
+    for (const QZipReader::FileInfo &info : entries) {
         if (info.isDir) continue;
 
         bool skip = false;
@@ -318,10 +403,25 @@ bool DownloadManager::extractFile(const QString &path, const QString &outputDir,
         }
         if (skip) continue;
 
+        QString relPath = info.filePath;
+        relPath.replace('\\', '/');
 
-        QString fileNameOnly = QFileInfo(info.filePath).fileName();
+        if (!stripPrefix.isEmpty()) {
+            if (!relPath.startsWith(stripPrefix)) continue;
+            relPath = relPath.mid(stripPrefix.size());
+        }
+        if (relPath.isEmpty()) continue;
 
-        QFile file(outputDir + "/" + fileNameOnly);
+        QString targetPath;
+        if (flatExtract) {
+            QString fileNameOnly = QFileInfo(relPath).fileName();
+            targetPath = outputDir + "/" + fileNameOnly;
+        } else {
+            targetPath = outputDir + "/" + relPath;
+            dir.mkpath(QFileInfo(targetPath).absolutePath());
+        }
+
+        QFile file(targetPath);
         if (file.open(QIODevice::WriteOnly)) {
             file.write(zip.fileData(info.filePath));
             file.close();
@@ -495,7 +595,7 @@ void DownloadManager::installMoreFiles(const DownloadTask dt, const QString id){
 
     if(isExistsAndValid(file, dt.hash)) {
         if (dt.isExtract) {
-            if(!extractFile(dt.path, dt.outputDir, dt.excludes)) {
+            if(!extractFile(dt.path, dt.outputDir, dt.excludes, dt.isFlatExtract)) {
                 cancelDownload(id);
                 return;
             }
@@ -527,8 +627,7 @@ void DownloadManager::installMoreFiles(const DownloadTask dt, const QString id){
         return;
     }
 
-    QNetworkRequest request((QUrl(dt.url)));
-    QNetworkReply *reply = manager->get(request);
+    QNetworkReply *reply = manager->get(QNetworkRequest(QUrl(dt.url)));
     activeReplies[id].append(reply);
     connect(reply, &QNetworkReply::finished, this, [this, reply, dt, id]() {
         activeReplies[id].removeOne(reply);
@@ -542,7 +641,7 @@ void DownloadManager::installMoreFiles(const DownloadTask dt, const QString id){
                 outFile.write(reply->readAll());
                 outFile.close();
                 if (dt.isExtract) {
-                    if(!extractFile(dt.path, dt.outputDir, dt.excludes)) {
+                    if(!extractFile(dt.path, dt.outputDir, dt.excludes, dt.isFlatExtract)) {
                         cancelDownload(id);
                         return;
                     }
@@ -591,12 +690,11 @@ void DownloadManager::updateVersions() {
     QNetworkReply* reply = manager->get(QNetworkRequest(QUrl(url_versions)));
 
     connect(reply, &QNetworkReply::finished, this, [this, reply](){
-        reply->deleteLater();
-
         if (reply->error() != QNetworkReply::NoError) {
             emit showNotification(reply->errorString(), "Error");
             qWarning() << "Loading error:" << reply->errorString();
             if (!emit updatedVersions()) {emit renderVersions({}, {});}
+            reply->deleteLater();
             return;
         }
 
@@ -607,6 +705,7 @@ void DownloadManager::updateVersions() {
             emit showNotification(QCoreApplication::translate("Error", "bad_json_data"), "Error");
             qWarning() << "JSON is null";
             if (!emit updatedVersions()) {emit renderVersions({}, {});}
+            reply->deleteLater();
             return;
         }
 
@@ -615,6 +714,7 @@ void DownloadManager::updateVersions() {
             emit showNotification(QCoreApplication::translate("Error", "cant_save_cache"), "Error");
             qWarning() << "Cant open versions file";
             if (!emit updatedVersions()) {emit renderVersions({}, {});}
+            reply->deleteLater();
             return;
         }
         
@@ -632,18 +732,28 @@ void DownloadManager::updateVersions() {
             const QString id = v["id"].toString();
             bool is_latest = false;
             if (id == latest_release_id) {
-                latest_versions["release"] = QVariantList{id, 
+                latest_versions["release"] = QVariantList{
+                    id,
                     QDateTime::fromString(v["releaseTime"].toString(), Qt::ISODate).toString("yyyy/MM/dd"), 
                     v["url"].toString(),
                     v["sha1"].toString()};
                 is_latest = true;
             }
             if (id == latest_snapshot_id) {
-                latest_versions["snapshot"] = QVariantList{id, 
+                latest_versions["snapshot"] = QVariantList{
+                    id,
                     QDateTime::fromString(v["releaseTime"].toString(), Qt::ISODate).toString("yyyy/MM/dd"),
                     v["url"].toString(),
                     v["sha1"].toString()};
                 is_latest = true;
+            }
+            if (id == "26.3") {
+                versions.append(QJsonArray{
+                    id + " Rust",
+                    "rust",
+                    v["url"].toString(),
+                    v["sha1"].toString()
+                });
             }
             if (is_latest){
                 continue;
@@ -660,6 +770,7 @@ void DownloadManager::updateVersions() {
         file_versions.write(QJsonDocument(doc).toJson(QJsonDocument::Indented));
         file_versions.close();
 
+        reply->deleteLater();
         emit updatedVersions();
     });
 }
