@@ -61,6 +61,7 @@ This project uses the following third-party components:
 - **MinGW-w64 runtime** – licensed under the MinGW-w64 runtime license (BSD-like).
 - **LZMA SDK / liblzma** – public domain.
 - **Minecraft Font (by IdreesInc)** – licensed under the SIL Open Font License, Version 1.1 (OFL‑1.1)
+- **Horizon (Minecraft Rust client)** – licensed under the GNU Lesser General Public License v3.0 or later (LGPL-3.0-or-later).
   
 The full texts of these licenses are available in the [COPYING](COPYING.md) file.
 
