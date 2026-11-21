@@ -207,15 +207,9 @@ QString DownloadManager::getHorizonSuffixes() {
         #endif
         suffixes = "windows-x64.zip";
     #elif defined(Q_OS_MACOS) || defined(Q_OS_MAC)
-        #if defined(Q_PROCESSOR_ARM_64) || defined(__aarch64__)
-            suffixes = "macos-aarch64.zip" << "macos-arm64.zip";
-        #endif
-        suffixes = "macos-x64.zip";
+        suffixes = "macos-arm64.zip";
     #elif defined(Q_OS_LINUX)
-        #if defined(Q_PROCESSOR_ARM_64) || defined(__aarch64__)
-            suffixes = "linux-aarch64.zip" << "linux-arm64.zip";
-        #endif
-        suffixes = "linux-x64.zip";
+        suffixes = "linux-x86_64.tar.gz";
     #endif
     return suffixes;
 }
