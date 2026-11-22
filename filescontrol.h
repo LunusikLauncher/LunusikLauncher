@@ -19,7 +19,7 @@ protected:
     QString detectSingleRootPrefix(const QList<QZipReader::FileInfo> &entries);
     bool checkRules(const QJsonArray rules, const SystemConfig &system);
     bool isVersionOlderOrEqual(const QString &current, const QString &target);
-    bool isExistsAndValid(QFile &file, const QString &hashFile);
+    bool isExistsAndValid(QFile &file, const QString &hashFile, const QCryptographicHash::Algorithm &method = QCryptographicHash::Sha1);
 
 };
 

@@ -229,13 +229,11 @@ void DownloadManager::downloadMinecraftRust(const QString text, const QString id
     emit statusTextChanged(text);
     QDir dir;
     QFile file_SHA256SUMS(minecraftDirectory + "/versions/" + name + "/SHA256SUMS");
+    installOneFile("https://github.com/horizon-rust/horizon/releases/download/nightly/SHA256SUMS", minecraftDirectory + "/versions/" + name + "/SHA256SUMS", " ");
     if(!file_SHA256SUMS.open(QIODevice::ReadOnly)) {
-        installOneFile("https://github.com/horizon-rust/horizon/releases/download/nightly/SHA256SUMS", minecraftDirectory + "/versions/" + name + "/SHA256SUMS");
-        if (!file_SHA256SUMS.open(QIODevice::ReadOnly)) {
-            notificationAndCancel(id, QCoreApplication::translate("Error", "cant_write_file"), "Error");
-            qWarning() << "Error: can't open file" << file_SHA256SUMS.fileName();
-            return;
-        }
+        notificationAndCancel(id, QCoreApplication::translate("Error", "cant_write_file"), "Error");
+        qWarning() << "Error: can't open file" << file_SHA256SUMS.fileName();
+        return;
     }
     QString SHA256SUMS = QString::fromUtf8(file_SHA256SUMS.readAll());
     file_SHA256SUMS.close();
@@ -244,7 +242,7 @@ void DownloadManager::downloadMinecraftRust(const QString text, const QString id
     QString fileName = "horizon-" + getHorizonSuffixes();
     QString urlHorizon = "https://github.com/horizon-rust/horizon/releases/download/nightly/" + fileName;
     QString hashHorizon = getHashForFile(SHA256SUMS, fileName);
-    qDebug() << "hashHorizon:" << hashHorizon;
+
     if (!dir.exists(fullPath)) {
         if (!dir.mkpath(fullPath)) {
             notificationAndCancel(id, QCoreApplication::translate("Error", "cant_create_dir"), "Error");
@@ -261,7 +259,7 @@ void DownloadManager::downloadMinecraftRust(const QString text, const QString id
     if (downloadTasks.isEmpty()) {
         return;
     }
-    downloadTasks.append({urlHorizon, fullPath + "/" + name.chopped(5) + "_" + fileName, hashHorizon, 1000, true, false, false, "", fullPath, {}});
+    downloadTasks.append({urlHorizon, fullPath + "/" + fileName, hashHorizon, 76000, true, false, false, "", fullPath, {}, false, QCryptographicHash::Sha256});
     downloadFiles(downloadTasks, text, id);
 }
 QList<DownloadTask> DownloadManager::createDownloadTasksJava(const QString name){
@@ -745,8 +743,7 @@ void DownloadManager::installMoreFiles(const DownloadTask dt, const QString id){
     QDir dir;
     QFileInfo fileinfo(dt.path);
     QFile file(dt.path);
-
-    if(isExistsAndValid(file, dt.hash)) {
+    if(isExistsAndValid(file, dt.hash, dt.methodHash)) {
         if (dt.isExtract) {
             if(!extractFile(dt.path, dt.outputDir, dt.excludes, dt.isFlatExtract)) {
                 cancelDownload(id);

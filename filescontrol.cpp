@@ -115,7 +115,7 @@ bool FilesControl::isVersionOlderOrEqual(const QString &current, const QString &
     }
     return true;
 }
-bool FilesControl::isExistsAndValid(QFile &file, const QString &hashFile){
+bool FilesControl::isExistsAndValid(QFile &file, const QString &hashFile, const QCryptographicHash::Algorithm &method){
     if (!file.exists()) {
         return false;
     }
@@ -125,7 +125,7 @@ bool FilesControl::isExistsAndValid(QFile &file, const QString &hashFile){
             qWarning() << "Cant open file: " << file.fileName();
             return false;
         }
-        QCryptographicHash hashGen(QCryptographicHash::Sha1); 
+        QCryptographicHash hashGen(method);
         
         char buffer[65536]; 
         while (!file.atEnd()) {

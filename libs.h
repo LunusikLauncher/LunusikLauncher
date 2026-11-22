@@ -97,6 +97,7 @@ struct DownloadTask {
     QStringList excludes;
 
     bool isExecutable = false;
+    QCryptographicHash::Algorithm methodHash = QCryptographicHash::Sha1;
 };
 
 struct gameParams {
